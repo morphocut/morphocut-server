@@ -1,4 +1,4 @@
-conda activate leadeagle
+conda activate morphocut
 
-export FLASK_APP=leadeagle.server && export FLASK_DEBUG=true
-#export LEADEAGLE_SETTINGS=config_XXX.py
+export FLASK_APP=morphocut.server && export FLASK_DEBUG=true
+#export morphocut_SETTINGS=config_XXX.py
