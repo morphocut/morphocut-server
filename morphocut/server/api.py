@@ -124,8 +124,8 @@ def process_dataset_route(id):
                 # download_filename = segmentation.process(
                 #     import_path, export_path)
 
-                print('download path: ' +
-                      relative_download_path + download_filename)
+                print('download path: '
+                      + relative_download_path + download_filename)
                 response_object['download_path'] = relative_download_path + \
                     download_filename
                 response_object['download_filename'] = download_filename
@@ -185,6 +185,16 @@ def process_and_zip(import_path, export_path):
         ]),
         Exporter(output_fp)
     ])
+
+    # pipeline = Pipeline([
+    #     DataLoader(import_path),
+    #     VignetteCorrector(),
+    #     ThresholdOtsu('corrected_data', 'binary_image')
+    #     ExtractRegions(),
+    #     GrayToRGB(),
+    #     ContourTransform(),
+    #     Exporter(output_fp)
+    # ])
 
     pipeline.execute()
 
