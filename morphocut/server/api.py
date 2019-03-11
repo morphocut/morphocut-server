@@ -124,8 +124,8 @@ def process_dataset_route(id):
                 # download_filename = segmentation.process(
                 #     import_path, export_path)
 
-                print('download path: '
-                      + relative_download_path + download_filename)
+                print('download path: ' +
+                      relative_download_path + download_filename)
                 response_object['download_path'] = relative_download_path + \
                     download_filename
                 response_object['download_filename'] = download_filename
@@ -169,23 +169,12 @@ def process_and_zip(import_path, export_path):
     if not os.path.exists(export_path):
         os.makedirs(export_path)
 
-    output_fn = 'ecotaxa_segmentation_{:%Y_%m_%d}_{}.zip'.format(
-        datetime.datetime.now(), helpers.random_string(n=7))
-    output_fp = os.path.join(
+    output_fn = os.path.join(
         export_path,
-        output_fn)
+        'ecotaxa_segmentation_{:%Y_%m_%d}_{}.zip'.format(
+            datetime.datetime.now(), helpers.random_string(n=7)))
 
-    pipeline = get_default_pipeline(import_path, export_path)
-
-    # pipeline = Pipeline([
-    #     DataLoader(import_path),
-    #     VignetteCorrector(),
-    #     ThresholdOtsu('corrected_data', 'binary_image')
-    #     ExtractRegions(),
-    #     GrayToRGB(),
-    #     ContourTransform(),
-    #     Exporter(output_fp)
-    # ])
+    pipeline = get_default_pipeline(import_path, output_fn)
 
     pipeline.execute()
 
