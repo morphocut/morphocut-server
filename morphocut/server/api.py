@@ -175,16 +175,7 @@ def process_and_zip(import_path, export_path):
         export_path,
         output_fn)
 
-    pipeline = Pipeline([
-        DataLoader(import_path),
-        VignetteCorrector(),
-        Processor(min_object_area=30, padding=0.5, raw_img_rank=3, image_manipulators=[
-            GreyImage(img_rank=2),
-            ContourImage(contour_distance_from_object=0.1, img_rank=1),
-            WhiteBackgroundImage(whiteness=0.5, img_rank=4),
-        ]),
-        Exporter(output_fp)
-    ])
+    pipeline = get_default_pipeline(import_path, export_path)
 
     # pipeline = Pipeline([
     #     DataLoader(import_path),
