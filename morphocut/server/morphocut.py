@@ -39,8 +39,8 @@ app = Flask(__name__)
 
 app.config.from_object('morphocut.server.config_default')
 
-if 'morphocut_SETTINGS' in os.environ:
-    app.config.from_envvar('morphocut_SETTINGS')
+if 'MORPHOCUT_SETTINGS' in os.environ:
+    app.config.from_envvar('MORPHOCUT_SETTINGS')
 
 # Initialize extensions
 database.init_app(app)
