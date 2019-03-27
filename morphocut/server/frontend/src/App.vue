@@ -7,9 +7,15 @@
 
       <b-collapse is-nav id="nav_collapse">
         <b-navbar-nav>
-          <b-nav-item to="/datasets">Datasets</b-nav-item>
           <b-nav-item to="/projects">Projects</b-nav-item>
-          <!-- <b-nav-item href="#" disabled>Disabled</b-nav-item> -->
+          <!-- <b-nav-item to="/projects">Projects</b-nav-item> -->
+        </b-navbar-nav>
+        <b-navbar-nav class="ml-auto">
+          <b-nav-item-dropdown right>
+            <!-- Using button-content slot -->
+            <template slot="button-content">Logged in as {{user.username}}</template>
+            <b-dropdown-item v-on:click="logout()" to="/">Logout</b-dropdown-item>
+          </b-nav-item-dropdown>
         </b-navbar-nav>
       </b-collapse>
     </b-navbar>
@@ -17,6 +23,40 @@
     <router-view/>
   </div>
 </template>
+
+<script>
+import axios from "axios";
+
+export default {
+  data() {
+    return {
+      user: {}
+    };
+  },
+  methods: {
+    logout() {
+      const path = "/api/logout";
+      axios.get(path);
+    },
+    getCurrentUser() {
+      const path = "/api/users/current";
+      axios
+        .get(path)
+        .then(res => {
+          this.user = res.data.user;
+          console.log(this.user);
+        })
+        .catch(error => {
+          // eslint-disable-next-line
+          console.error(error);
+        });
+    }
+  },
+  created() {
+    this.getCurrentUser();
+  }
+};
+</script>
 
 <style>
 #app {

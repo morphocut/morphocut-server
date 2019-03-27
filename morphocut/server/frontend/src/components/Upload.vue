@@ -9,7 +9,7 @@
       Options
     </button>
     <!-- @Christian: When the component is mounted, initialize the dataset using the given dataset_id. -->
-    <h1 id="example-title" class="example-title">{{dataset.name}}: Upload</h1>
+    <h1 id="example-title" class="example-title">{{project.name}}: Upload</h1>
     <!-- <h1 id="example-title" class="example-title">Dataset: Upload</h1> -->
     <!-- Drop Modal that shows up, when hovering above the page with files -->
     <div v-show="$refs.upload && $refs.upload.dropActive" class="drop-active">
@@ -30,7 +30,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(file, index) in dataset_files" :key="file.object_id">
+            <tr v-for="(file, index) in project_files" :key="file.object_id">
               <td>{{index}}</td>
               <td>
                 <img width="40" height="auto">
@@ -74,7 +74,8 @@
             <tr v-if="!files.length">
               <td colspan="7">
                 <div class="text-center p-5">
-                  <h4>Drop files anywhere to upload
+                  <h4>
+                    Drop files anywhere to upload
                     <br>or
                   </h4>
                   <label :for="name" class="btn btn-lg btn-primary">Select Files</label>
@@ -121,7 +122,7 @@
                       href="#"
                       @click.prevent="file.active ? $refs.upload.update(file, {error: 'cancel'}) : false"
                     >Cancel</a>
-                    
+
                     <a
                       class="dropdown-item"
                       href="#"
@@ -585,9 +586,9 @@ export default {
 
   data() {
     return {
-      dataset: null,
+      project: null,
       files: [],
-      dataset_files: [],
+      project_files: [],
       accept: "image/png,image/gif,image/jpeg,image/webp",
       extensions: "gif,jpg,jpeg,png,webp",
       // extensions: ['gif', 'jpg', 'jpeg','png', 'webp'],
@@ -601,7 +602,7 @@ export default {
       addIndex: false,
       thread: 3,
       name: "file",
-      postAction: "/api/datasets/" + this.$route.params.dataset_id + "/upload",
+      postAction: "/api/projects/" + this.$route.params.project_id + "/upload",
       putAction: "",
       headers: {
         "X-Csrf-Token": "xxxx"
@@ -664,26 +665,26 @@ export default {
   },
 
   methods: {
-    getDataset() {
-      const path = "/api/datasets/" + this.$route.params.dataset_id;
+    getProject() {
+      const path = "/api/projects/" + this.$route.params.project_id;
       axios
         .get(path)
         .then(res => {
-          this.dataset = res.data.dataset;
-          console.log(this.dataset);
+          this.project = res.data.project;
+          console.log(this.project);
         })
         .catch(error => {
           // eslint-disable-next-line
           console.error(error);
         });
     },
-    getDatasetFiles() {
-      const path = "/api/datasets/" + this.$route.params.dataset_id + "/files";
+    getProjectFiles() {
+      const path = "/api/projects/" + this.$route.params.project_id + "/files";
       axios
         .get(path)
         .then(res => {
-          this.dataset_files = res.data.dataset_files;
-          console.log(this.dataset_files);
+          this.project_files = res.data.project_files;
+          console.log(this.project_files);
         })
         .catch(error => {
           // eslint-disable-next-line
@@ -764,12 +765,12 @@ export default {
       // const path = "/upload";
       // axios.post(path, newFile)
       // .then(() => {
-      //   this.getDatasets();
+      //   this.getProjects();
       // })
       // .catch(error => {
       //   // eslint-disable-next-line
       //   console.log(error);
-      //   this.getDatasets();
+      //   this.getProjects();
       // });
 
       if (newFile && !oldFile) {
@@ -927,8 +928,8 @@ export default {
     }
   },
   created() {
-    this.getDataset();
-    this.getDatasetFiles();
+    this.getProject();
+    this.getProjectFiles();
   }
 };
 </script>

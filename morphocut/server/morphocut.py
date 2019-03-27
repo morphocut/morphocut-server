@@ -15,6 +15,7 @@ from flask import (Flask, Response, abort, redirect, render_template, request,
                    url_for)
 import json
 import urllib.parse
+import datetime
 
 from flask.helpers import send_from_directory
 import sqlalchemy
@@ -25,9 +26,10 @@ from sqlalchemy.sql import select, and_, union, intersect
 from timer_cm import Timer
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
+from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
+from flask_login import logout_user
 
 from morphocut.server import models
-from morphocut import segmentation
 from morphocut.server.extensions import database, migrate, redis_store
 from morphocut.server.frontend import frontend
 from morphocut.server.api import api
@@ -47,6 +49,7 @@ database.init_app(app)
 redis_store.init_app(app)
 migrate.init_app(app, database)
 CORS(app)
+user_manager = UserManager(app, database, models.User)
 
 
 # Enable batch mode
@@ -89,21 +92,29 @@ def add_user(username, admin):
         print("Passwords do not match!")
         return
 
-    pwhash = generate_password_hash(
-        password, method='pbkdf2:sha256:10000', salt_length=12)
+    # pwhash = generate_password_hash(
+    #     password, method='pbkdf2:sha256:10000', salt_length=12)
 
-    add_user_to_database(username, pwhash, admin)
+    # add_user_to_database(username, pwhash, admin)
+    add_user_to_database(username, password, admin)
 
 
-def add_user_to_database(username, pwhash, admin):
-    print('username: {}, pw: {}, admin: {}'.format(username, pwhash, admin))
-    try:
-        with database.engine.connect() as conn:
-            stmt = models.users.insert(
-                {"username": username, "pwhash": pwhash, 'admin': admin})
-            conn.execute(stmt)
-    except IntegrityError as e:
-        print(e)
+def add_user_to_database(username, password, admin):
+    print('username: {}, admin: {}'.format(username, admin))
+    # try:
+    #     with database.engine.connect() as conn:
+    #         stmt = models.users.insert(
+    #             {"username": username, "pwhash": pwhash, 'admin': admin})
+    #         conn.execute(stmt)
+    # except IntegrityError as e:
+    #     print(e)
+    if not models.User.query.filter(models.User.username == username).first():
+        user = models.User(
+            username=username,
+            password=user_manager.hash_password(password),
+        )
+        database.session.add(user)
+        database.session.commit()
 
 
 # Register API and frontend
@@ -112,8 +123,17 @@ app.register_blueprint(api, url_prefix='/api')
 
 
 @app.route("/")
+@login_required
 def index():
     print('index request')
+    return redirect(url_for("frontend.index"))
+
+
+@app.route("/frontend")
+@roles_required('Admin')    # Use of @roles_required decorator
+@login_required
+def frontend_route():
+    print('frontend request')
     return redirect(url_for("frontend.index"))
 
 
@@ -135,7 +155,7 @@ def check_auth(username, password, admin_rights):
     return check_password_hash(user["pwhash"], password) and ((not admin_rights) or user['admin'])
 
 
-@app.before_request
+# @app.before_request
 def require_auth():
     # exclude 404 errors and static routes
     # uses split to handle blueprint static routes as well

@@ -6,6 +6,7 @@ import datetime
 
 from flask.blueprints import Blueprint
 from flask.helpers import send_from_directory
+from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 
 frontend = Blueprint("frontend", __name__,
                      static_folder="frontend/dist/static", static_url_path="static")
@@ -13,6 +14,7 @@ frontend = Blueprint("frontend", __name__,
 
 @frontend.route('/', defaults={'path': ''})
 @frontend.route('/<path:path>')
+@login_required
 def index(path):
     response = send_from_directory("frontend/dist", 'index.html')
     del response.headers['Expires']

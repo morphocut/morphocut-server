@@ -2,11 +2,11 @@
   <div class="container">
     <div class="row">
       <div class="col-sm-10">
-        <h1>Datasets</h1>
+        <h1>Projects</h1>
         <hr>
         <br>
         <br>
-        <button type="button" class="btn btn-success btn-sm" v-b-modal.dataset-modal>Add Dataset</button>
+        <button type="button" class="btn btn-success btn-sm" v-b-modal.dataset-modal>Add Project</button>
         <br>
         <br>
         <table class="table table-hover">
@@ -16,28 +16,38 @@
               <th scope="col">Name</th>
               <th scope="col">Objects</th>
               <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(dataset, index) in datasets" :key="index">
+            <tr v-for="dataset in datasets" :key="dataset.id">
               <td>{{ dataset.id }}</td>
               <td>{{ dataset.name }}</td>
               <td>{{ dataset.objects }}</td>
               <td>
+                <div v-if="dataset.download_running" style="display: flex;">
+                  <div class="loader"></div>
+                  <p style="width: 10px;"></p>
+                  <p>Processing...</p>
+                </div>
+                <div v-if="dataset.download_path && !dataset.download_running">
+                  <p>Download Ready!</p>
+                </div>
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  style="margin-left: 0.5rem;"
+                  v-on:click="processDataset(dataset)"
+                >Process</button>
                 <b-button
                   type="button"
                   class="btn btn-warning btn-sm"
-                  :to="{ name: 'Upload', params: { dataset_id: dataset.id }}"
-                >Edit
-                  <!-- <router-link :to="{ name: 'Upload', params: { dataset: 123 }}">Edit</router-link> -->
-                  <!-- @Christian: :to="{ name: 'Upload', params: { dataset_id: dataset.id }} -->
-                </b-button>
-                <button
-                  type="button"
-                  class="btn btn-danger btn-sm"
                   style="margin-left: 0.5rem;"
-                  v-on:click="removeDataset(dataset.id)"
-                >Delete</button>
+                  v-if="dataset.download_path"
+                  :href="dataset.download_path"
+                >Download</b-button>
               </td>
             </tr>
           </tbody>
@@ -46,15 +56,6 @@
     </div>
     <b-modal ref="addDatasetModal" id="dataset-modal" title="Add a new dataset" hide-footer>
       <b-form @submit="onSubmit" @reset="onReset" class="w-100">
-        <!-- <b-form-group id="form-id-group" label="ID:" label-for="form-id-input">
-          <b-form-input
-            id="form-id-input"
-            type="number"
-            v-model="addDatasetForm.id"
-            required
-            placeholder="Enter ID"
-          ></b-form-input>
-        </b-form-group>-->
         <b-form-group id="form-name-group" label="Name:" label-for="form-name-input">
           <b-form-input
             id="form-name-input"
@@ -64,17 +65,8 @@
             placeholder="Enter name"
           ></b-form-input>
         </b-form-group>
-        <!-- <b-form-group id="form-objects-group" label="Objects:" label-for="form-objects-input">
-          <b-form-input
-            id="form-objects-input"
-            type="text"
-            v-model="addDatasetForm.objects"
-            required
-            placeholder="Enter objects"
-          ></b-form-input>
-        </b-form-group>-->
-        <b-button type="submit" variant="primary">Submit</b-button>
-        <b-button type="reset" variant="danger">Reset</b-button>
+        <!-- <b-button type="submit" variant="primary">Submit</b-button>
+        <b-button type="reset" variant="danger">Reset</b-button>-->
       </b-form>
     </b-modal>
   </div>
@@ -87,6 +79,8 @@ export default {
   data() {
     return {
       datasets: [],
+      //   download_complete: true,
+      //   download_path: "",
       addDatasetForm: {
         id: 0,
         name: "",
@@ -94,9 +88,6 @@ export default {
       }
     };
   },
-  // props: {
-  //   dataset
-  // },
   methods: {
     getDatasets() {
       const path = "/api/datasets";
@@ -104,6 +95,7 @@ export default {
         .get(path)
         .then(res => {
           this.datasets = res.data.datasets;
+          console.log("datasets:");
           console.log(this.datasets);
         })
         .catch(error => {
@@ -124,8 +116,38 @@ export default {
           this.getDatasets();
         });
     },
-    removeDataset(id) {
-      console.log("remove dataset: " + id);
+    processDataset(dataset) {
+      const path = "/api/datasets/" + dataset.id + "/process";
+      this.$set(dataset, "download_complete", false);
+      this.$set(dataset, "download_running", true);
+      axios.get(path).then(res => {
+        // this.$set(dataset, "download_complete", true);
+        // this.$set(dataset, "download_running", false);
+        // console.log("download path: " + res.data.download_path);
+        // dataset.download_path = res.data.download_path;
+        console.log(res);
+        const job_id = res.data.job_id;
+        console.log(job_id);
+        this.getStatus(job_id);
+      });
+    },
+    getStatus(job_id) {
+      const path = "/api/jobs/" + job_id;
+      axios.get(path).then(res => {
+        const jobStatus = res.data.job_status;
+        console.log(res);
+
+        if (jobStatus === "finished" || jobStatus === "failed") {
+          console.log(res.data.job_result);
+          return false;
+        }
+        setTimeout(
+          function() {
+            this.getStatus(res.data.job_id);
+          }.bind(this),
+          1000
+        );
+      });
     },
     initForm() {
       this.addDatasetForm.id = 0;
@@ -154,3 +176,23 @@ export default {
   }
 };
 </script>
+
+<style>
+.loader {
+  border: 3px solid #f3f3f3; /* Light grey */
+  border-top: 3px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>

@@ -3,7 +3,8 @@ import Router from 'vue-router'
 import Home from './views/Home.vue'
 import Ping from '@/components/Ping';
 import Upload from '@/components/Upload';
-import Datasets from '@/components/Datasets';
+import Project from '@/components/Project';
+// import Datasets from '@/components/Datasets';
 import Projects from '@/components/Projects';
 import Accounts from '@/components/Accounts';
 
@@ -32,17 +33,25 @@ export default new Router({
       name: 'Ping',
       component: Ping,
     },
+    // {
+    //   path: '/datasets',
+    //   name: 'Datasets',
+    //   component: Datasets,
+    // },
     {
-      path: '/datasets',
-      name: 'Datasets',
-      component: Datasets,
-    },
-    {
-      path: '/datasets/:dataset_id/upload',
+      path: '/projects/:project_id/upload',
       name: 'Upload',
       component: Upload,
       props: (route) => ({
-        dataset_id: parseInt(route.params.dataset_id)
+        project_id: parseInt(route.params.project_id)
+      }),
+    },
+    {
+      path: '/projects/:project_id',
+      name: 'Project',
+      component: Project,
+      props: (route) => ({
+        project_id: parseInt(route.params.project_id)
       }),
     },
     {
