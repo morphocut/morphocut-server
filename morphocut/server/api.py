@@ -173,11 +173,14 @@ def get_project_job_status(project_id):
         _tasks = user.get_finished_project_tasks(project_id)
         finished_task_dicts = []
         for task in _tasks:
-            download_path = 'localhost:5000/static/' + \
-                task.result.split('static/')[1]
-            task_dict = dict(id=task.id, name=task.name, description=task.description,
-                             complete=task.complete, result=task.result, download_path=download_path)
-            finished_task_dicts.append(task_dict)
+            try:
+                download_path = 'localhost:5000/static/' + \
+                    task.result.split('static/')[1]
+                task_dict = dict(id=task.id, name=task.name, description=task.description,
+                                complete=task.complete, result=task.result, download_path=download_path)
+                finished_task_dicts.append(task_dict)
+            except Exception as err:
+                print(err)
 
         response_object = {
             'running_tasks': running_task_dicts,
