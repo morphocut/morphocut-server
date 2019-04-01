@@ -16,6 +16,7 @@ frontend = Blueprint("frontend", __name__,
 @frontend.route('/<path:path>')
 @login_required
 def index(path):
+    print('index: ' + str(path))
     response = send_from_directory("frontend/dist", 'index.html')
     del response.headers['Expires']
     del response.headers['ETag']

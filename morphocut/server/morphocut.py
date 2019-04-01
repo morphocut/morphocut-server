@@ -100,14 +100,6 @@ def add_user(username, admin):
 
 
 def add_user_to_database(username, password, admin):
-    print('username: {}, admin: {}'.format(username, admin))
-    # try:
-    #     with database.engine.connect() as conn:
-    #         stmt = models.users.insert(
-    #             {"username": username, "pwhash": pwhash, 'admin': admin})
-    #         conn.execute(stmt)
-    # except IntegrityError as e:
-    #     print(e)
     if not models.User.query.filter(models.User.username == username).first():
         user = models.User(
             username=username,
@@ -129,12 +121,11 @@ def index():
     return redirect(url_for("frontend.index"))
 
 
-@app.route("/frontend")
-@roles_required('Admin')    # Use of @roles_required decorator
+@app.route("/logout")
 @login_required
-def frontend_route():
-    print('frontend request')
-    return redirect(url_for("frontend.index"))
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
 
 
 # ===============================================================================

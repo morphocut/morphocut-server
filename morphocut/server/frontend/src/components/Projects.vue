@@ -1,19 +1,25 @@
 <template>
-  <div class="container">
+  <div class="project">
+    <div style="margin-top: 1rem; margin-bottom: 1rem;">
+      <h2 id="project-title" class="project-title">
+        <b-badge>Projects</b-badge>
+      </h2>
+      <div class="project-divider"></div>
+    </div>
+
+    <b-button
+      type="button"
+      class="btn btn-success project-button"
+      v-b-modal.project-modal
+    >Add Project</b-button>
+
     <div class="row">
-      <div class="col-sm-10">
-        <h1>Projects</h1>
-        <hr>
-        <br>
-        <br>
-        <button type="button" class="btn btn-success btn-sm" v-b-modal.project-modal>Add Project</button>
-        <br>
-        <br>
-        <table class="table table-hover">
-          <thead>
+      <div class="col-12">
+        <table class="table table-hover table-sm">
+          <thead class="thead-light">
             <tr>
-              <!-- <th scope="col">ID</th> -->
               <th scope="col">Name</th>
+              <th scope="col">Creator</th>
               <th scope="col">Objects</th>
               <th scope="col">Creation Date</th>
               <th></th>
@@ -21,50 +27,21 @@
           </thead>
           <tbody>
             <tr v-for="(project, index) in projects" :key="index">
-              <!-- <td>{{ project.id }}</td> -->
-              <!-- :to="{ name: 'Upload', params: { project_id: project.project_id }}" -->
               <td>
                 <b-link
                   :to="{ name: 'Project', params: { project_id: project.project_id }}"
                 >{{ project.name }}</b-link>
               </td>
+              <td>{{ project.username }}</td>
               <td>{{ project.object_count }}</td>
               <td>{{ project.creation_date }}</td>
               <td>
-                <!-- <b-button
-                  type="button"
-                  class="btn btn-warning btn-sm"
-                  :to="{ name: 'Upload', params: { project_id: project.project_id }}"
-                >
-                  Edit
-                </b-button>-->
                 <button
                   type="button"
                   class="btn btn-danger btn-sm"
                   style="margin-left: 0.5rem;"
                   v-on:click="removeProject(project.project_id)"
                 >Delete</button>
-                <!-- <div v-if="project.download_running" style="display: flex;">
-                  <div class="loader"></div>
-                  <p style="width: 10px;"></p>
-                  <p>Processing...</p>
-                </div>
-                <div v-if="project.download_path && !project.download_running">
-                  <p>Download Ready!</p>
-                </div>-->
-                <!-- <button
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  style="margin-left: 0.5rem;"
-                  v-on:click="processProject(project)"
-                >Process</button>-->
-                <!-- <b-button
-                  type="button"
-                  class="btn btn-warning btn-sm"
-                  style="margin-left: 0.5rem;"
-                  v-if="project.download_path"
-                  :href="project.download_path"
-                >Download</b-button>-->
               </td>
             </tr>
           </tbody>
@@ -73,15 +50,6 @@
     </div>
     <b-modal ref="addProjectModal" id="project-modal" title="Add a new project" hide-footer>
       <b-form @submit="onSubmit" @reset="onReset" class="w-100">
-        <!-- <b-form-group id="form-id-group" label="ID:" label-for="form-id-input">
-          <b-form-input
-            id="form-id-input"
-            type="number"
-            v-model="addProjectForm.id"
-            required
-            placeholder="Enter ID"
-          ></b-form-input>
-        </b-form-group>-->
         <b-form-group id="form-name-group" label="Name:" label-for="form-name-input">
           <b-form-input
             id="form-name-input"
@@ -91,21 +59,14 @@
             placeholder="Enter name"
           ></b-form-input>
         </b-form-group>
-        <!-- <b-form-group id="form-objects-group" label="Objects:" label-for="form-objects-input">
-          <b-form-input
-            id="form-objects-input"
-            type="text"
-            v-model="addProjectForm.objects"
-            required
-            placeholder="Enter objects"
-          ></b-form-input>
-        </b-form-group>-->
         <b-button type="submit" variant="primary">Submit</b-button>
         <b-button type="reset" variant="danger">Reset</b-button>
       </b-form>
     </b-modal>
   </div>
 </template>
+
+
 
 <script>
 import axios from "axios";
@@ -121,9 +82,6 @@ export default {
       }
     };
   },
-  // props: {
-  //   project
-  // },
   methods: {
     getProjects() {
       const path = "/api/projects";
@@ -151,22 +109,19 @@ export default {
           this.getProjects();
         });
     },
-    removeProject(id) {
-      console.log("remove project: " + id);
-    },
     processProject(project) {
       const path = "/api/projects/" + project.project_id + "/process";
-      this.$set(project, "download_complete", false);
-      this.$set(project, "download_running", true);
       axios.get(path).then(res => {
-        // this.$set(dataset, "download_complete", true);
-        // this.$set(dataset, "download_running", false);
-        // console.log("download path: " + res.data.download_path);
-        // dataset.download_path = res.data.download_path;
         console.log(res);
         const job_id = res.data.job_id;
         console.log(job_id);
         this.getStatus(job_id);
+      });
+    },
+    removeProject(project_id) {
+      const path = "/api/projects/" + project_id + "/remove";
+      axios.get(path).then(res => {
+        this.getProjects();
       });
     },
     getStatus(job_id) {

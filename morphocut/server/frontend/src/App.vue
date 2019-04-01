@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <b-navbar toggleable="md" type="dark" variant="dark" sticky="true">
+    <b-navbar toggleable="md" type="dark" variant="dark" sticky>
       <b-navbar-toggle target="nav_collapse"></b-navbar-toggle>
 
       <b-navbar-brand to="/">morphocut</b-navbar-brand>
@@ -8,13 +8,15 @@
       <b-collapse is-nav id="nav_collapse">
         <b-navbar-nav>
           <b-nav-item to="/projects">Projects</b-nav-item>
+          <b-nav-item to="/tasks">Tasks</b-nav-item>
           <!-- <b-nav-item to="/projects">Projects</b-nav-item> -->
         </b-navbar-nav>
         <b-navbar-nav class="ml-auto">
           <b-nav-item-dropdown right>
             <!-- Using button-content slot -->
             <template slot="button-content">Logged in as {{user.username}}</template>
-            <b-dropdown-item v-on:click="logout()" to="/">Logout</b-dropdown-item>
+            <!-- <b-dropdown-item to="/logout">Logout</b-dropdown-item> -->
+            <b-dropdown-item href="http://localhost:5000/logout">Logout</b-dropdown-item>
           </b-nav-item-dropdown>
         </b-navbar-nav>
       </b-collapse>
@@ -199,5 +201,43 @@ pre {
 .topnav a.active {
   background-color: #4caf50;
   color: white;
+}
+
+.project .project-title {
+  margin-bottom: 0.3rem;
+  text-align: left;
+}
+.project .project-button {
+  text-align: left;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.project .project-divider {
+  height: 1px;
+  background: darkgrey;
+}
+
+.project .project-image {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.project .card .card-title {
+  font-size: 1rem;
+  margin-bottom: 0.15rem;
+}
+
+.project .card .card-body {
+  padding: 0.25rem;
+}
+
+.project .card {
+  margin-bottom: 1rem;
+}
+
+.project {
+  margin-left: 2rem;
+  margin-right: 2rem;
 }
 </style>

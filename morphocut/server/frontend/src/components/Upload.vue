@@ -1,23 +1,12 @@
 <template>
   <div class="example-full">
-    <button
-      type="button"
-      class="btn btn-danger float-right btn-is-option"
-      @click.prevent="isOption = !isOption"
-    >
-      <i class="fa fa-cog" aria-hidden="true"></i>
-      Options
-    </button>
-    <!-- @Christian: When the component is mounted, initialize the dataset using the given dataset_id. -->
-    <h1 id="example-title" class="example-title">{{project.name}}: Upload</h1>
-    <!-- <h1 id="example-title" class="example-title">Dataset: Upload</h1> -->
     <!-- Drop Modal that shows up, when hovering above the page with files -->
     <div v-show="$refs.upload && $refs.upload.dropActive" class="drop-active">
-      <h3>Hello there! Drop files to upload</h3>
+      <h3>Drop files to upload</h3>
     </div>
     <div class="upload" v-show="!isOption">
-      <div class="table-responsive">
-        <table class="table table-hover">
+      <!-- <div>
+        <table class="table table-hover table-sm">
           <thead>
             <tr>
               <th>#</th>
@@ -29,50 +18,25 @@
               <th>Action</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="(file, index) in project_files" :key="file.object_id">
-              <td>{{index}}</td>
-              <td>
-                <img width="40" height="auto">
-                <!-- <span v-else>No Image</span> -->
-                <!-- <div class="filename">{{file.fileObject}}</div> -->
-              </td>
-              <td>
-                <div class="filename">{{file.filename}}</div>
-                <!-- <div class="progress" v-if="file.active || file.progress !== '0.00'">Uploaded</div> -->
-              </td>
-              <!-- <td>{{file.size | formatFileSize}}</td> -->
-              <td>FileSize</td>
-              <!-- <td>{{file.speed}}</td> -->
-              <td></td>
-
-              <td v-if="file.error">{{file.error}}</td>
-              <td v-else-if="file.success">success</td>
-              <td v-else-if="file.active">active</td>
-              <td v-else></td>
-              <td>
-                <div class="btn-group">
-                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button">Action</button>
-                  <div class="dropdown-menu">
-                    <a
-                      :class="{'dropdown-item': true, disabled: file.active || file.success || file.error === 'compressing'}"
-                      href="#"
-                      @click.prevent="file.active || file.success || file.error === 'compressing' ? false :  onEditFileShow(file)"
-                    >Edit</a>
-
-                    <div class="dropdown-divider"></div>
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      @click.prevent="$refs.upload.remove(file)"
-                    >Remove</a>
-                  </div>
-                </div>
-              </td>
+        </table>
+      </div>-->
+      <div class="table-responsive" style="height: 60vh;">
+        <table class="table table-hover table-sm">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Thumb</th>
+              <th>Name</th>
+              <th>Progress</th>
+              <th>Size</th>
+              <th>Speed</th>
+              <th>Status</th>
+              <th>Action</th>
             </tr>
-
+          </thead>
+          <tbody>
             <tr v-if="!files.length">
-              <td colspan="7">
+              <td colspan="8">
                 <div class="text-center p-5">
                   <h4>
                     Drop files anywhere to upload
@@ -92,6 +56,8 @@
               </td>
               <td>
                 <div class="filename">{{file.name}}</div>
+              </td>
+              <td>
                 <div class="progress" v-if="file.active || file.progress !== '0.00'">
                   <div
                     :class="{'progress-bar': true, 'progress-bar-striped': true, 'bg-danger': file.error, 'progress-bar-animated': file.active}"
@@ -109,46 +75,13 @@
               <td v-else-if="file.active">active</td>
               <td v-else></td>
               <td>
-                <div class="btn-group">
-                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button">Action</button>
-                  <div class="dropdown-menu">
-                    <a
-                      :class="{'dropdown-item': true, disabled: file.active || file.success || file.error === 'compressing'}"
-                      href="#"
-                      @click.prevent="file.active || file.success || file.error === 'compressing' ? false :  onEditFileShow(file)"
-                    >Edit</a>
-                    <a
-                      :class="{'dropdown-item': true, disabled: !file.active}"
-                      href="#"
-                      @click.prevent="file.active ? $refs.upload.update(file, {error: 'cancel'}) : false"
-                    >Cancel</a>
-
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      v-if="file.active"
-                      @click.prevent="$refs.upload.update(file, {active: false})"
-                    >Abort</a>
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      v-else-if="file.error && file.error !== 'compressing' && $refs.upload.features.html5"
-                      @click.prevent="$refs.upload.update(file, {active: true, error: '', progress: '0.00'})"
-                    >Retry upload</a>
-                    <a
-                      :class="{'dropdown-item': true, disabled: file.success || file.error === 'compressing'}"
-                      href="#"
-                      v-else
-                      @click.prevent="file.success || file.error === 'compressing' ? false : $refs.upload.update(file, {active: true})"
-                    >Upload</a>
-
-                    <div class="dropdown-divider"></div>
-                    <a
-                      class="dropdown-item"
-                      href="#"
-                      @click.prevent="$refs.upload.remove(file)"
-                    >Remove</a>
-                  </div>
+                <div>
+                  <button
+                    class="btn btn-secondary btn-sm"
+                    href="#"
+                    :disabled="file.error && file.error !== 'compressing' && $refs.upload.features.html5"
+                    @click.prevent="$refs.upload.update(file, {active: true, error: '', progress: '0.00'})"
+                  >Retry upload</button>
                 </div>
               </td>
             </tr>
@@ -156,12 +89,6 @@
         </table>
       </div>
       <div class="example-foorer">
-        <div class="footer-status float-right">
-          Drop: {{$refs.upload ? $refs.upload.drop : false}},
-          Active: {{$refs.upload ? $refs.upload.active : false}},
-          Uploaded: {{$refs.upload ? $refs.upload.uploaded : true}},
-          Drop active: {{$refs.upload ? $refs.upload.dropActive : false}}
-        </div>
         <div class="btn-group">
           <file-upload
             class="btn btn-primary dropdown-toggle"
@@ -528,7 +455,6 @@
 .example-full .example-foorer {
   padding: 0.5rem 0;
   border-top: 1px solid #e9ecef;
-  border-bottom: 1px solid #e9ecef;
 }
 
 .example-full .edit-image img {
@@ -591,8 +517,6 @@ export default {
       project_files: [],
       accept: "image/png,image/gif,image/jpeg,image/webp",
       extensions: "gif,jpg,jpeg,png,webp",
-      // extensions: ['gif', 'jpg', 'jpeg','png', 'webp'],
-      // extensions: /\.(gif|jpe?g|png|webp)$/i,
       minSize: 1024,
       size: 1024 * 1024 * 10,
       multiple: true,
@@ -609,7 +533,6 @@ export default {
       },
       data: {
         _csrf_token: "xxxxxx"
-        // dataset_id: JSON.stringify(this.dataset.id)
       },
 
       autoCompress: 1024 * 1024,
@@ -873,7 +796,6 @@ export default {
 
     // add folader
     onAddFolader() {
-      this.alert("on add folder");
       if (!this.$refs.upload.features.directory) {
         this.alert("Your browser does not support");
         return;
@@ -894,7 +816,6 @@ export default {
     },
 
     onAddData() {
-      this.alert("on add data");
       this.addData.show = false;
       if (!this.$refs.upload.features.html5) {
         this.alert("Your browser does not support");

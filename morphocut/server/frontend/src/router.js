@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import Home from './views/Home.vue'
 import Ping from '@/components/Ping';
 import Upload from '@/components/Upload';
+import Tasks from '@/components/Tasks';
 import Project from '@/components/Project';
 // import Datasets from '@/components/Datasets';
 import Projects from '@/components/Projects';
@@ -33,11 +34,16 @@ export default new Router({
       name: 'Ping',
       component: Ping,
     },
-    // {
-    //   path: '/datasets',
-    //   name: 'Datasets',
-    //   component: Datasets,
-    // },
+    {
+      path: '/tasks',
+      name: 'Tasks',
+      component: Tasks,
+      props: {
+        getAction: '/api/users/current/jobs',
+        title: "Tasks",
+        showProject: true
+      },
+    },
     {
       path: '/projects/:project_id/upload',
       name: 'Upload',
@@ -51,7 +57,7 @@ export default new Router({
       name: 'Project',
       component: Project,
       props: (route) => ({
-        project_id: parseInt(route.params.project_id)
+        project_id: parseInt(route.params.project_id),
       }),
     },
     {

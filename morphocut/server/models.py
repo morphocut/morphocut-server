@@ -4,7 +4,7 @@ import datetime
 
 from sqlalchemy.types import Integer, BigInteger, String, DateTime, PickleType, Boolean, Text, Float
 from sqlalchemy.sql.schema import UniqueConstraint, CheckConstraint
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSON
 from sqlalchemy.sql import func
 from morphocut.server.extensions import database, redis_queue
 from morphocut.server.worker import redis_conn
@@ -36,7 +36,7 @@ objects = Table('objects', metadata,
                 Column('modification_date', DateTime,
                        default=datetime.datetime.now),
                 Column('project_id', Integer, ForeignKey(
-                    'projects.project_id'), index=True),
+                    'projects.project_id', ondelete="CASCADE"), index=True),
                 )
 
 
@@ -75,27 +75,44 @@ class User(database.Model, UserMixin):
     roles = database.relationship('Role', secondary='user_roles')
 
     def launch_task(self, name, description, project_id, *args, **kwargs):
-        # rq_job = current_app.task_queue.enqueue('app.tasks.' + name, self.id,
-        #                                         *args, **kwargs)
-        # print('args:')
-        # print(*args)
-        # print('len(args): ' + str(len(list(*args))))
+        '''
+        enqueue job with a maximum runtime of 10 hours
+        '''
         rq_job = redis_queue.enqueue(name,
-                                     *args, **kwargs)
+                                     *args, **kwargs, timeout=36000)
         task = Task(id=rq_job.get_id(), name=name, description=description,
                     user_id=self.id, project_id=project_id)
         database.session.add(task)
         return task, rq_job
 
     def get_tasks_in_progress(self):
-        return Task.query.filter_by(user_id=self.id, complete=False).all()
+        tasks = Task.query.filter_by(
+            user_id=self.id, complete=False).all()
+        failed_tasks = []
+        for task in tasks:
+            job = task.get_rq_job()
+            if job:
+                if job.status == 'failed':
+                    failed_tasks.append(task)
+        return [t for t in tasks if t not in failed_tasks]
+
+    def get_finished_tasks(self):
+        return Task.query.filter_by(user_id=self.id, complete=True).all()
 
     def get_task_in_progress(self, name):
         return Task.query.filter_by(name=name, user_id=self.id,
                                     complete=False).first()
 
     def get_project_tasks_in_progress(self, project_id):
-        return Task.query.filter_by(user_id=self.id, complete=False, project_id=project_id).all()
+        tasks = Task.query.filter_by(
+            user_id=self.id, complete=False, project_id=project_id).all()
+        failed_tasks = []
+        for task in tasks:
+            job = task.get_rq_job()
+            if job:
+                if job.status == 'failed':
+                    failed_tasks.append(task)
+        return [t for t in tasks if t not in failed_tasks]
 
     def get_finished_project_tasks(self, project_id):
         return Task.query.filter_by(user_id=self.id, complete=True, project_id=project_id).all()
@@ -127,7 +144,7 @@ class Task(database.Model):
     user_id = database.Column(
         database.Integer, database.ForeignKey('users.id'))
     project_id = database.Column(
-        database.Integer, database.ForeignKey('projects.project_id'))
+        database.Integer, database.ForeignKey('projects.project_id', ondelete="CASCADE"))
     complete = database.Column(database.Boolean, default=False)
     result = database.Column(database.String())
 

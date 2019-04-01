@@ -8,13 +8,16 @@ from morphocut.server import morphocut
 
 
 def launch_task(name, description, *args, **kwargs):
+    '''
+    Launches a task with the given function and args. Then launches a task which starts when the first one is finished, writing its results to the database.
+    '''
     task, rq_job = current_user.launch_task(name, description, *args, **kwargs)
     database.session.commit()
 
-    # rq_job = redis_queue.enqueue(name,
-    #                              *args, **kwargs)
+    # Need to look into this more. This should enqueue a job to write back the result right after the processing job is finished 
+    # but if some other job is enqueued before that, it is started before this writeback job even when this is enqueued at the front
     write_result_job = redis_queue.enqueue('morphocut.server.tasks.write_result',
-                                           task.id, depends_on=rq_job)
+                                           task.id, depends_on=rq_job, at_front=True)
 
     return task
 

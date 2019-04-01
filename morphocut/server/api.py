@@ -42,6 +42,9 @@ from morphocut.server.frontend import frontend
 api = Blueprint("api", __name__)
 
 
+# =================================================== Users Routes ===================================================
+
+
 @api.route('/users', methods=['GET', 'POST'])
 def get_users_route():
     response_object = {'status': 'success'}
@@ -64,20 +67,56 @@ def get_users_route():
     return jsonify(response_object)
 
 
-@api.route('/projects/<id>/files', methods=['GET'])
-def get_project_files_route(id):
+@api.route("/users/current", methods=['GET'])
+def get_current_user_route():
     response_object = {'status': 'success'}
-    if request.method == 'GET':
-        response_object['project_files'] = get_project_files(id)
+    user = current_user
+
+    if user:
+        response_object = {
+            'user': {
+                'id': user.id,
+                'username': user.username,
+            }
+        }
+    else:
+        response_object = {'status': 'error'}
     return jsonify(response_object)
 
 
-@api.route('/projects/<id>', methods=['GET'])
-def get_project_route(id):
-    response_object = {'status': 'success'}
-    if request.method == 'GET':
-        response_object['project'] = get_project(id)
+@api.route("/users/current/jobs", methods=['GET'])
+def get_current_user_tasks_route():
+    user = current_user
+
+    if user:
+        return get_user_jobs_route(user.id)
+    else:
+        response_object = {'status': 'error'}
     return jsonify(response_object)
+
+
+@api.route('/users/<id>/jobs', methods=['GET', 'POST'])
+def get_user_jobs_route(id):
+    user = models.User.query.filter_by(id=id).first()
+
+    if user:
+        _tasks = user.get_tasks_in_progress()
+        running_tasks = get_running_task_dicts(_tasks)
+
+        _tasks = user.get_finished_tasks()
+        finished_tasks = get_finished_task_dicts(_tasks)
+
+        response_object = {
+            'running_tasks': running_tasks,
+            'finished_tasks': finished_tasks
+        }
+    else:
+        response_object = {'status': 'error'}
+    print(jsonify(response_object))
+    return jsonify(response_object)
+
+
+# =================================================== Projects Routes ===================================================
 
 
 @api.route('/projects', methods=['GET', 'POST'])
@@ -98,6 +137,22 @@ def get_projects_route():
     return jsonify(response_object)
 
 
+@api.route('/projects/<id>', methods=['GET'])
+def get_project_route(id):
+    response_object = {'status': 'success'}
+    if request.method == 'GET':
+        response_object['project'] = get_project(id)
+    return jsonify(response_object)
+
+
+@api.route('/projects/<id>/files', methods=['GET'])
+def get_project_files_route(id):
+    response_object = {'status': 'success'}
+    if request.method == 'GET':
+        response_object['project_files'] = get_project_files(id)
+    return jsonify(response_object)
+
+
 @api.route('/projects/<id>/process', methods=['GET'])
 def process_project_route(id):
     response_object = {'status': 'success'}
@@ -115,72 +170,28 @@ def process_project_route(id):
 
                 import_path = os.path.join(
                     app.root_path, app.config['UPLOAD_FOLDER'], project_path)
-
-                relative_export_path = os.path.join(
-                    app.config['UPLOAD_FOLDER'], project_path)
-                relative_download_path = '/' + \
-                    app.config['UPLOAD_FOLDER'] + '/' + project_path + '/'
                 export_path = os.path.join(
-                    app.root_path, relative_export_path)
+                    app.root_path, app.config['UPLOAD_FOLDER'], project_path)
 
                 if current_user.get_task_in_progress('process_and_zip'):
                     print('A process task is currently in progress')
                 else:
-                    # current_user.launch_task('morphocut.server.api.process_and_zip',
-                    #                          'Processing project...', id, import_path, export_path)
-                    # database.session.commit()
-                    # task = current_user.get_task_in_progress(
-                    #     'morphocut.server.api.process_and_zip')
                     task = tasks.launch_task('morphocut.server.api.process_and_zip',
                                              'Processing project...', id, import_path, export_path)
                     response_object['job_id'] = task.id
     return jsonify(response_object), 202
 
 
-# @api.route("/jobs/<job_key>", methods=['GET'])
-# def get_status(job_key):
-#     job = Job.fetch(job_key, connection=redis_conn)
-
-#     if job:
-#         response_object = {
-#             'status': 'success',
-#             'job_id': job.get_id(),
-#             'job_status': job.get_status(),
-#             'job_result': job.result,
-#         }
-#     else:
-#         response_object = {'status': 'error'}
-#     print(jsonify(response_object))
-#     return jsonify(response_object)
-
-
-@api.route("/jobs/<project_id>", methods=['GET'])
-def get_project_job_status(project_id):
+@api.route("/projects/<id>/jobs", methods=['GET'])
+def get_project_job_status(id):
     user = current_user
 
     if user:
-        _tasks = user.get_project_tasks_in_progress(project_id)
-        running_task_dicts = []
-        for task in _tasks:
-            job = Job.fetch(task.id, connection=redis_conn)
-            task_dict = dict(id=task.id, name=task.name, description=task.description,
-                             complete=task.complete, result=task.result)
-            if job:
-                task_dict['status'] = job.status
-                task_dict['started_at'] = job.started_at
-            running_task_dicts.append(task_dict)
+        _tasks = user.get_project_tasks_in_progress(id)
+        running_task_dicts = get_running_task_dicts(_tasks)
 
-        _tasks = user.get_finished_project_tasks(project_id)
-        finished_task_dicts = []
-        for task in _tasks:
-            try:
-                download_path = 'localhost:5000/static/' + \
-                    task.result.split('static/')[1]
-                task_dict = dict(id=task.id, name=task.name, description=task.description,
-                                complete=task.complete, result=task.result, download_path=download_path)
-                finished_task_dicts.append(task_dict)
-            except Exception as err:
-                print(err)
+        _tasks = user.get_finished_project_tasks(id)
+        finished_task_dicts = get_finished_task_dicts(_tasks)
 
         response_object = {
             'running_tasks': running_task_dicts,
@@ -189,22 +200,6 @@ def get_project_job_status(project_id):
     else:
         response_object = {'status': 'error'}
     print(jsonify(response_object))
-    return jsonify(response_object)
-
-
-@api.route("/users/current", methods=['GET'])
-def get_current_user_route():
-    user = current_user
-
-    if user:
-        response_object = {
-            'user': {
-                'id': user.id,
-                'username': user.username,
-            }
-        }
-    else:
-        response_object = {'status': 'error'}
     return jsonify(response_object)
 
 
@@ -218,7 +213,6 @@ def upload(id):
         file = request.files['file']
         project = get_project(id)
         if file and allowed_file(file.filename):
-            # filename = secure_filename(file.filename)
             filename = file.filename
             filepath = os.path.normpath(os.path.join(flask.current_app.root_path,
                                                      flask.current_app.config['UPLOAD_FOLDER'], project['path'], filename))
@@ -240,11 +234,94 @@ def upload(id):
     return jsonify(response_object)
 
 
-@api.route("/logout")
+@api.route("/projects/<project_id>/remove", methods=['GET'])
+def remove_project(project_id):
+    response_object = {'status': 'success'}
+    with database.engine.begin() as connection:
+
+        stmt = select([models.projects.c.path]).where(
+            models.projects.c.project_id == project_id)
+        project = connection.execute(stmt).first()
+
+        if project:
+            app = flask.current_app
+            project_path = os.path.join(
+                app.root_path, app.config['UPLOAD_FOLDER'], project['path'])
+            if 'morphocut' in project_path and 'static' in project_path:
+                print('removing project with id {}'.format(project_id))
+                if os.path.exists(project_path):
+                    helpers.remove_directory(project_path)
+
+                stmt = models.projects.delete().where(
+                    models.projects.c.project_id == project_id
+                )
+                connection.execute(stmt)
+
+    return jsonify(response_object)
+
+
+# =================================================== Tasks Routes ===================================================
+
+
+@api.route("/jobs/<task_id>/remove", methods=['GET'])
 @login_required
-def logout():
-    logout_user()
-    return redirect(url_for("index"))
+def remove_task(task_id):
+    response_object = {'status': 'success'}
+
+    task = models.Task.query.filter(models.Task.id == task_id).first()
+    print('removing task with id {}'.format(task.id))
+    if task.complete and 'morphocut' in task.result and 'static' in task.result:
+        helpers.remove_file(task.result)
+
+    database.session.delete(task)
+    database.session.commit()
+
+    return jsonify(response_object)
+
+
+# =================================================== General Routes ===================================================
+
+
+# =================================================== Helper functions ===================================================
+
+
+def get_running_task_dicts(tasks):
+    running_task_dicts = []
+    with database.engine.begin() as connection:
+        for task in tasks:
+            job = Job.fetch(task.id, connection=redis_conn)
+            project = connection.execute(select([sqlalchemy.text(
+                '*')]).select_from(models.projects).where(models.projects.c.project_id == task.project_id)).first()
+            task_dict = dict(id=task.id, name=task.name, description=task.description,
+                             complete=task.complete, result=task.result, progress=task.get_progress(), project_id=task.project_id)
+            if job:
+                task_dict['status'] = job.status
+                if job.started_at:
+                    task_dict['started_at'] = job.started_at.strftime(
+                        '%Y-%m-%d %H:%M:%S')
+            if project:
+                task_dict['project_name'] = project['name']
+            running_task_dicts.append(task_dict)
+    return running_task_dicts
+
+
+def get_finished_task_dicts(tasks):
+    finished_task_dicts = []
+    with database.engine.begin() as connection:
+        for task in tasks:
+            try:
+                download_path = 'localhost:5000/static/' + \
+                    task.result.split('static/')[1]
+                task_dict = dict(id=task.id, name=task.name, description=task.description,
+                                 complete=task.complete, result=task.result, download_path=download_path, status='finished', project_id=task.project_id)
+                finished_task_dicts.append(task_dict)
+            except Exception as err:
+                print(err)
+            project = connection.execute(select([sqlalchemy.text(
+                '*')]).select_from(models.projects).where(models.projects.c.project_id == task.project_id)).first()
+            if project:
+                task_dict['project_name'] = project['name']
+    return finished_task_dicts
 
 
 def process_and_zip(import_path, export_path):
@@ -273,12 +350,18 @@ def allowed_file(filename):
 def get_projects():
     with database.engine.begin() as connection:
         result = connection.execute(select(
-            [models.projects.c.project_id, models.projects.c.name, models.projects.c.path, models.projects.c.creation_date, func.count(models.objects.c.object_id).label('object_count')])
+            [models.projects.c.project_id, models.projects.c.name, models.projects.c.path, models.projects.c.creation_date, models.projects.c.user_id, func.count(models.objects.c.object_id).label('object_count')])
             .select_from(models.projects.outerjoin(models.objects))
             .where(and_(models.projects.c.active == True, models.projects.c.user_id == current_user.id))
             .group_by(models.projects.c.project_id)
             .order_by(models.projects.c.project_id))
-        return [dict(row) for row in result]
+        projects = [dict(row) for row in result]
+        for project in projects:
+            user = models.User.query.filter_by(
+                id=project['user_id']).first()
+            if user:
+                project['username'] = user.username
+        return projects
 
 
 def get_project_files(id):
@@ -299,7 +382,8 @@ def get_project_files(id):
                      object_id=row['object_id'],
                      modification_date=row['modification_date'],
                      creation_date=row['creation_date'],
-                     filepath='localhost:5000/static/' + urllib.parse.quote(os.path.join(project_path, row['filename']).replace('\\', '/'))) for row in result]
+                     filepath='/static/' + os.path.join(project_path, row['filename']).replace('\\', '/'))
+                for row in result]
 
 
 def get_project(id):
