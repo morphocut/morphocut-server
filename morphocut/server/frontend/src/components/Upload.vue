@@ -9,9 +9,9 @@
         <table class="table table-hover table-sm">
           <thead>
             <tr>
-              <th>#</th>
               <th>Thumb</th>
               <th>Name</th>
+              <th>Progress</th>
               <th>Size</th>
               <th>Speed</th>
               <th>Status</th>
@@ -22,9 +22,8 @@
       </div>-->
       <div class="table-responsive" style="height: 60vh;">
         <table class="table table-hover table-sm">
-          <thead>
+          <thead class="thead-light">
             <tr>
-              <th>#</th>
               <th>Thumb</th>
               <th>Name</th>
               <th>Progress</th>
@@ -35,7 +34,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!files.length">
+            <!-- <tr v-if="!files.length">
               <td colspan="8">
                 <div class="text-center p-5">
                   <h4>
@@ -45,10 +44,10 @@
                   <label :for="name" class="btn btn-lg btn-primary">Select Files</label>
                 </div>
               </td>
-            </tr>
+            </tr>-->
 
             <tr v-for="(file, index) in files" :key="file.id">
-              <td>{{index}}</td>
+              <!-- <td>{{index}}</td> -->
               <td>
                 <img v-if="file.thumb" :src="file.thumb" width="40" height="auto">
                 <span v-else>No Image</span>
@@ -80,6 +79,42 @@
                     class="btn btn-secondary btn-sm"
                     href="#"
                     :disabled="file.error && file.error !== 'compressing' && $refs.upload.features.html5"
+                    @click.prevent="$refs.upload.update(file, {active: true, error: '', progress: '0.00'})"
+                  >Retry upload</button>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="tr-success" v-for="(file, index) in project_files" :key="file.id">
+              <!-- <td>{{index}}</td> -->
+              <td>
+                <img v-if="file.filepath" :src="file.filepath" width="40" height="auto">
+                <span v-else>No Image</span>
+                <!-- <div class="filename">{{file.fileObject}}</div> -->
+              </td>
+              <td>
+                <div class="filename">{{file.filename}}</div>
+              </td>
+              <td>
+                <div class="progress">
+                  <div
+                    :class="{'progress-bar': true, 'progress-bar-striped': true, 'bg-danger': file.error, 'progress-bar-animated': file.active}"
+                    role="progressbar"
+                    :style="{width: '100%'}"
+                  >100%</div>
+                </div>
+              </td>
+              <td>---</td>
+              <!-- <td>{{file.speed}}</td> -->
+              <td>---</td>
+
+              <td>On Server</td>
+              <td>
+                <div>
+                  <button
+                    class="btn btn-secondary btn-sm"
+                    href="#"
+                    disabled="True"
                     @click.prevent="$refs.upload.update(file, {active: true, error: '', progress: '0.00'})"
                   >Retry upload</button>
                 </div>
