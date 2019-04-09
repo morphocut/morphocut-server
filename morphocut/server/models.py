@@ -51,7 +51,8 @@ objects = Table('objects', metadata,
 
 class User(database.Model, UserMixin):
     __tablename__ = 'users'
-    id = database.Column(database.Integer, primary_key=True)
+    id = database.Column(
+        database.Integer(), primary_key=True)
     active = database.Column('is_active', database.Boolean(),
                              nullable=False, server_default='1')
 

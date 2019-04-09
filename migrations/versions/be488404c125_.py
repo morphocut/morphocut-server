@@ -8,6 +8,7 @@ Create Date: 2019-03-27 06:20:41.384731
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.schema import Sequence, CreateSequence
 
 # revision identifiers, used by Alembic.
 revision = 'be488404c125'
@@ -23,6 +24,9 @@ def upgrade():
     op.drop_column('users', 'user_id')
     op.add_column('users', sa.Column('id', sa.Integer(), nullable=False))
     op.create_primary_key('pk_user', 'users', ['id'])
+    op.execute(CreateSequence(Sequence('users_id_seq')))
+    op.alter_column("users", "id", nullable=False, server_default=sa.text(
+        "nextval('users_id_seq'::regclass)"))
     op.add_column('users', sa.Column('is_active', sa.Boolean(),
                                      server_default='1', nullable=False))
     op.add_column('users', sa.Column('password', sa.String(
@@ -81,11 +85,11 @@ def upgrade():
     op.drop_index('ix_objects_dataset_id', table_name='objects')
     op.drop_constraint('objects_dataset_id_fkey',
                        'objects', type_='foreignkey')
-    op.create_foreign_key(None, 'objects', 'projects', [
+    op.create_foreign_key('objects_project_id_fkey', 'objects', 'projects', [
                           'project_id'], ['project_id'])
     op.drop_column('objects', 'dataset_id')
     op.drop_table('datasets')
-    op.create_unique_constraint(None, 'users', ['username'])
+    op.create_unique_constraint('users_username_key', 'users', ['username'])
     # ### end Alembic commands ###
 
 
@@ -97,18 +101,18 @@ def downgrade():
                                      autoincrement=False, nullable=True))
     op.add_column('users', sa.Column('admin', sa.BOOLEAN(),
                                      autoincrement=False, nullable=True))
-    op.drop_constraint(None, 'users', type_='unique')
+    op.drop_constraint('users_username_key', 'users', type_='unique')
     op.alter_column('users', 'username',
                     existing_type=sa.VARCHAR(),
                     nullable=True)
     op.drop_column('users', 'password')
     op.drop_column('users', 'is_active')
-    op.drop_column('users', 'id')
+
     op.add_column('objects', sa.Column(
         'dataset_id', sa.INTEGER(), autoincrement=False, nullable=True))
-    op.drop_constraint(None, 'objects', type_='foreignkey')
-    op.create_foreign_key('objects_dataset_id_fkey', 'objects', 'datasets', [
-                          'dataset_id'], ['dataset_id'])
+    op.drop_constraint('objects_project_id_fkey',
+                       'objects', type_='foreignkey')
+
     op.create_index('ix_objects_dataset_id', 'objects',
                     ['dataset_id'], unique=False)
     op.drop_index(op.f('ix_objects_project_id'), table_name='objects')
@@ -134,4 +138,7 @@ def downgrade():
     op.drop_index(op.f('ix_projects_user_id'), table_name='projects')
     op.drop_table('projects')
     op.drop_table('roles')
+    op.create_foreign_key('objects_dataset_id_fkey', 'objects', 'datasets', [
+                          'dataset_id'], ['dataset_id'])
+    op.drop_column('users', 'id')
     # ### end Alembic commands ###
