@@ -18,8 +18,8 @@ export default new Router({
   base: process.env.BASE_URL,
   routes: [{
       path: '/',
-      name: 'home',
-      component: Home
+      name: 'Projects',
+      component: Projects
     },
     {
       path: '/tiles',

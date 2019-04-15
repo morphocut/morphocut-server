@@ -1,5 +1,6 @@
 <template>
   <div class="project">
+    <vue-headful title="Projects | MorphoCut"/>
     <div style="margin-top: 1rem; margin-bottom: 1rem;">
       <h2 id="project-title" class="project-title">
         <b-badge>Projects</b-badge>

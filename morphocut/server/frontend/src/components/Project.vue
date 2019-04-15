@@ -1,5 +1,6 @@
 <template>
   <div class="project" id="app">
+    <vue-headful v-if="project" :title="'Project - '+project.name+' | MorphoCut'"/>
     <div style="margin-top: 1rem; margin-bottom: 1rem;">
       <h2 id="project-title" class="project-title" v-if="project">
         <b-badge>{{project.name}}</b-badge>

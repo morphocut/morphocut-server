@@ -13,7 +13,8 @@ SQLALCHEMY_DATABASE_OPTIONS = {
 # Project export directory
 PROJECT_EXPORT_DIR = "/tmp"
 
-UPLOAD_FOLDER = 'static'
+DATA_DIRECTORY = 'data'
+STATIC_DIRECTORY = 'static'
 
 # Upload Settings
 ALLOWED_EXTENSIONS = set(

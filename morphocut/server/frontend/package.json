@@ -14,9 +14,12 @@
     "bootstrap-vue": "^2.0.0-rc.18",
     "cropperjs": "^1.4.3",
     "http-proxy-middleware": "0.19.1",
+    "v-viewer": "^1.4.0",
     "vue": "^2.5.17",
     "vue-form-generator": "^2.3.4",
+    "vue-headful": "^2.0.1",
     "vue-multiselect": "^2.1.4",
+    "vue-piczoom": "^1.0.6",
     "vue-router": "^3.0.1",
     "vue-upload-component": "^2.8.18",
     "vue2-leaflet": "^1.0.2"

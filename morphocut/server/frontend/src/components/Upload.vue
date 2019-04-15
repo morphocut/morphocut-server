@@ -88,8 +88,18 @@
             <tr class="tr-success" v-for="(file, index) in project_files" :key="file.id">
               <!-- <td>{{index}}</td> -->
               <td>
+                <!-- <pic-zoom
+                  v-if="file.filepath"
+                  :url="file.filepath"
+                  :scale="3"
+                  width="40"
+                  height="auto"
+                ></pic-zoom>-->
                 <img v-if="file.filepath" :src="file.filepath" width="40" height="auto">
                 <span v-else>No Image</span>
+                <!-- <viewer inline="false" fullscreen="true" zoomable="true">
+                  <img :src="file.filepath" :key="file.filepath">
+                </viewer>-->
                 <!-- <div class="filename">{{file.fileObject}}</div> -->
               </td>
               <td>
@@ -460,6 +470,17 @@
         </div>
       </div>
     </div>
+    <div v-viewer="options" class="images clearfix">
+      <template v-for="{source, thumbnail} in images">
+        <img
+          :src="thumbnail"
+          :data-source="source"
+          class="image"
+          :key="source"
+          :alt="source.split('?image=').pop()"
+        >
+      </template>
+    </div>
   </div>
 </template>
 <style>
@@ -533,16 +554,36 @@
   color: #fff;
   padding: 0;
 }
+
+.image {
+  width: calc(20% - 10px);
+  cursor: pointer;
+  margin: 5px;
+  display: inline-block;
+}
 </style>
 
 <script>
 import Cropper from "cropperjs";
 import ImageCompressor from "@xkeshi/image-compressor";
 import FileUpload from "vue-upload-component";
+// import PicZoom from "vue-piczoom";
+import "viewerjs/dist/viewer.css";
+import Viewer from "v-viewer";
+import Vue from "vue";
 import axios from "axios";
+
+Vue.use(Viewer, {
+  debug: true,
+  defaultOptions: {
+    zIndex: 9999
+  }
+});
+
 export default {
   components: {
     FileUpload
+    // PicZoom
   },
 
   data() {
@@ -584,6 +625,11 @@ export default {
       editFile: {
         show: false,
         name: ""
+      },
+
+      options: {
+        toolbar: true,
+        url: "data-source"
       }
     };
   },
@@ -623,6 +669,10 @@ export default {
   },
 
   methods: {
+    show() {
+      const viewer = this.$el.querySelector(".images").$viewer;
+      viewer.show();
+    },
     getProject() {
       const path = "/api/projects/" + this.$route.params.project_id;
       axios
@@ -665,37 +715,6 @@ export default {
         if (/\.(php5?|html?|jsx?)$/i.test(newFile.name)) {
           return prevent();
         }
-
-        // Automatic compression
-        // 自动压缩
-        // if (
-        //   newFile.file &&
-        //   newFile.type.substr(0, 6) === "image/" &&
-        //   this.autoCompress > 0 &&
-        //   this.autoCompress < newFile.size
-        // ) {
-        //   newFile.error = "compressing";
-        //   const imageCompressor = new ImageCompressor(null, {
-        //     convertSize: Infinity,
-        //     maxWidth: 512,
-        //     maxHeight: 512
-        //   });
-        //   imageCompressor
-        //     .compress(newFile.file)
-        //     .then(file => {
-        //       this.$refs.upload.update(newFile, {
-        //         error: "",
-        //         file,
-        //         size: file.size,
-        //         type: file.type
-        //       });
-        //     })
-        //     .catch(err => {
-        //       this.$refs.upload.update(newFile, {
-        //         error: err.message || "compress"
-        //       });
-        //     });
-        // }
       }
 
       if (newFile && (!oldFile || newFile.file !== oldFile.file)) {
@@ -719,17 +738,6 @@ export default {
     // add, update, remove File Event
     inputFile(newFile, oldFile) {
       console.log("inputfile");
-
-      // const path = "/upload";
-      // axios.post(path, newFile)
-      // .then(() => {
-      //   this.getProjects();
-      // })
-      // .catch(error => {
-      //   // eslint-disable-next-line
-      //   console.log(error);
-      //   this.getProjects();
-      // });
 
       if (newFile && !oldFile) {
         // add

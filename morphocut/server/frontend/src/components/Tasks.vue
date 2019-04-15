@@ -1,5 +1,8 @@
 <template>
   <div class="project">
+    <div v-if="title">
+      <vue-headful v-if="title" title="Tasks | MorphoCut"/>
+    </div>
     <div style="margin-top: 1rem; margin-bottom: 1rem;" v-if="title">
       <h2 id="project-title" class="project-title">
         <b-badge>{{title}}</b-badge>

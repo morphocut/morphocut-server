@@ -1,5 +1,5 @@
 module.exports = {
-    baseUrl: "/frontend",
+    publicPath: "/frontend",
     assetsDir: "static",
     devServer: {
         proxy: {
@@ -14,8 +14,15 @@ module.exports = {
                 target: 'http://localhost:5000',
                 ws: true,
                 changeOrigin: true,
-                proxyTimeout: 30 * 60 * 1000, // set proxy timeout to 30 minutes due to long running requests (=> processing)
-                onProxyReq: (proxyReq, req, res) => req.setTimeout(30 * 60 * 1000)
+                proxyTimeout: 5 * 60 * 1000,
+                onProxyReq: (proxyReq, req, res) => req.setTimeout(5 * 60 * 1000)
+            },
+            '/data': {
+                target: 'http://localhost:5000',
+                ws: true,
+                changeOrigin: true,
+                proxyTimeout: 5 * 60 * 1000,
+                onProxyReq: (proxyReq, req, res) => req.setTimeout(5 * 60 * 1000)
             },
         },
     }

@@ -3,11 +3,11 @@ import App from './App.vue'
 import router from './router'
 import 'bootstrap/dist/css/bootstrap.css';
 import BootstrapVue from 'bootstrap-vue';
-import VueMultiselect from "vue-multiselect";
+import vueHeadful from "vue-headful";
 
 Vue.config.productionTip = false
 Vue.use(BootstrapVue);
-Vue.component("multiSelect", VueMultiselect.default);
+Vue.component('vue-headful', vueHeadful);
 
 new Vue({
   router,
