@@ -21,12 +21,11 @@
               <th scope="col">Status</th>
               <th scope="col">Started At</th>
               <th scope="col">Progress</th>
-              <th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(task, index) in running_tasks" :key="index">
-              <th scope="col" v-if="showProject">{{task.project_name}}</th>
+              <td scope="col" v-if="showProject">{{task.project_name}}</td>
               <td>{{ task.status }}</td>
               <td>{{ task.started_at }}</td>
               <td>
@@ -39,6 +38,7 @@
             </tr>
           </tbody>
         </table>
+        <div v-if="!running_tasks.length">There are no running tasks.</div>
       </div>
       <div class="col-6">
         <h4 id="tasks-title" class="tasks-title">
@@ -49,16 +49,18 @@
             <tr>
               <th scope="col" v-if="showProject">Project</th>
               <th scope="col">Status</th>
-              <!-- <th scope="col">Complete</th> -->
               <th scope="col">Download</th>
-              <th></th>
+              <th scope="col">Action</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(task, index) in finished_tasks" :key="index">
-              <th scope="col" v-if="showProject">{{task.project_name}}</th>
+              <td scope="col" v-if="showProject">
+                <b-link
+                  :to="{ name: 'Project', params: { project_id: task.project_id }}"
+                >{{ task.project_name }}</b-link>
+              </td>
               <td>{{ task.status }}</td>
-              <!-- <td>{{ task.complete }}</td> -->
               <td>
                 <b-button
                   variant="success"
@@ -79,6 +81,7 @@
             </tr>
           </tbody>
         </table>
+        <div v-if="!finished_tasks.length">There are no finished tasks.</div>
       </div>
     </div>
   </div>

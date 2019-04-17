@@ -132,6 +132,11 @@
             </tr>
           </tbody>
         </table>
+        <div>
+          <p
+            v-if="!project_files.length && !files.length"
+          >This project does not contain any files yet.</p>Drop files here!
+        </div>
       </div>
       <div class="example-foorer">
         <div class="btn-group">

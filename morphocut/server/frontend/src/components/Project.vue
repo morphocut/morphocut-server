@@ -31,20 +31,47 @@
           </b-tab>
 
           <b-tab title="Process">
-            <div class="row">
-              <div class="col-4" style="margin-left: auto; margin-right: auto;">
-                <!-- <vue-form-generator :schema="schema" :model="model" :options="formOptions"></vue-form-generator> -->
-              </div>
-            </div>
-
             <b-button
               type="button"
               variant="primary"
               class="btn btn-primary"
+              size="lg"
               v-if="project"
               v-on:click="processProject(project)"
               :to="{ name: 'Tasks' }"
             >Process</b-button>
+            <!-- :to="{ name: 'Tasks' }" -->
+            <div
+              class="project-divider"
+              style="margin-top: 1rem; margin-bottom: 1rem; margin-left: 10rem; margin-right: 10rem;"
+            ></div>
+            <h4 id="tasks-title" class="tasks-title">
+              <b>Process Settings:</b>
+            </h4>
+            <div class="row">
+              <div class="col-4" style="margin-left: auto; margin-right: auto;">
+                <div
+                  v-for="(node, index) in ['DataLoader', 'VignetteCorrector', 'BGR2Gray', 'ThresholdOtsu', 'ExtractRegions', 'FadeBackground', 'DrawContours', 'ObjectScale', 'Exporter']"
+                  :key="index"
+                >
+                  <b-button
+                    v-b-toggle="'collapse-'+index"
+                    variant="outline-secondary"
+                    style="width: 100%;"
+                    size="sm"
+                  >{{ node }}</b-button>
+                  <b-collapse :id="'collapse-'+index" class="mt-2">
+                    <b-card>
+                      <vue-form-generator
+                        :schema="schema[node]"
+                        :model="models[node]"
+                        :options="formOptions"
+                      ></vue-form-generator>
+                    </b-card>
+                  </b-collapse>
+                </div>
+              </div>
+            </div>
           </b-tab>
 
           <b-tab title="Tasks">
@@ -63,7 +90,6 @@ import axios from "axios";
 import Upload from "@/components/Upload.vue";
 import Tasks from "@/components/Tasks.vue";
 import VueFormGenerator from "vue-form-generator";
-// import Multiselect from "vue-multiselect";
 
 import "vue-form-generator/dist/vfg.css"; // optional full css additions
 
@@ -71,124 +97,146 @@ export default {
   components: {
     Upload,
     Tasks,
-    // Multiselect,
     "vue-form-generator": VueFormGenerator.component
   },
   data() {
-    var fieldObject = [
-      {
-        type: "input",
-        inputType: "text",
-        label: "ID",
-        model: "id",
-        readonly: true,
-        featured: false,
-        disabled: true
-      },
-      {
-        type: "vueMultiSelect",
-        model: "name",
-        label: "Name",
-        placeholder: "Select your favorite names",
-        required: true,
-        selectOptions: {
-          multiple: true,
-          key: "name",
-          label: "name",
-          searchable: true,
-          clearOnSelect: false,
-          closeOnSelect: false,
-          limit: 2 // limits the visible results to 2
-        },
-        values: [
-          {
-            name: "Peter",
-            language: "JavaScript"
-          },
-          {
-            name: "Cassandra",
-            language: "Ruby"
-          },
-          {
-            name: "Ruby",
-            language: "Ruby"
-          }
-        ]
-      },
-      {
-        type: "input",
-        inputType: "password",
-        label: "Password",
-        model: "password",
-        min: 6,
-        required: true,
-        hint: "Minimum 6 characters",
-        validator: VueFormGenerator.validators.string
-      },
-      {
-        type: "input",
-        inputType: "number",
-        label: "Age",
-        model: "age",
-        min: 18,
-        validator: VueFormGenerator.validators.number
-      },
-      {
-        type: "input",
-        inputType: "email",
-        label: "E-mail",
-        model: "email",
-        placeholder: "User's e-mail address",
-        validator: VueFormGenerator.validators.email
-      },
-      {
-        type: "checklist",
-        label: "Skills",
-        model: "skills",
-        multi: true,
-        required: true,
-        multiSelect: true,
-        values: [
-          "HTML5",
-          "Javascript",
-          "CSS3",
-          "CoffeeScript",
-          "AngularJS",
-          "ReactJS",
-          "VueJS"
-        ]
-      },
-      {
-        type: "switch",
-        label: "Status",
-        model: "status",
-        multi: true,
-        readonly: false,
-        featured: false,
-        disabled: false,
-        default: true,
-        textOn: "Active",
-        textOff: "Inactive"
-      }
-    ];
     return {
       project: null,
       project_files: [],
       running_tasks: [],
       finished_tasks: [],
       tabIndex: 0,
-      model: {
-        id: 1,
-        name: "John Doe",
-        password: "J0hnD03!x4",
-        age: 35,
-        skills: ["Javascript", "VueJS"],
-        email: "john.doe@gmail.com",
-        status: true
+      models: {
+        DataLoader: {
+          image_extensions: [".jpeg", ".jpg", ".png", ".gif", ".tif", ".JPG"]
+        },
+        VignetteCorrector: {},
+        BGR2Gray: {},
+        ThresholdOtsu: {},
+        ExtractRegions: {
+          min_area: 0,
+          padding: 0
+        },
+        FadeBackground: {
+          alpha: 0.5,
+          bg_color: 1.0
+        },
+        DrawContours: {
+          dilate_rel: 0.0,
+          dilate_abs: 0.0
+        },
+        ObjectScale: {},
+        Exporter: {
+          img_facets: [
+            "color",
+            "gray",
+            "mask",
+            "bg_white",
+            "color_contours",
+            "color_contours_scale"
+          ],
+          img_ext: ".jpg"
+        }
       },
-      fieldObject,
       schema: {
-        fields: fieldObject
+        DataLoader: {
+          fields: [
+            {
+              type: "checklist",
+              label: "Image Extensions",
+              model: "image_extensions",
+              multi: true,
+              multiSelect: true,
+              values: [".jpeg", ".jpg", ".png", ".gif", ".tif", ".JPG"]
+            }
+          ]
+        },
+        VignetteCorrector: { fields: [] },
+        BGR2Gray: { fields: [] },
+        ThresholdOtsu: { fields: [] },
+        ExtractRegions: {
+          fields: [
+            {
+              type: "input",
+              inputType: "number",
+              label: "Minimum Object Area",
+              model: "min_area",
+              validator: VueFormGenerator.validators.number
+            },
+            {
+              type: "input",
+              inputType: "number",
+              label: "Padding",
+              model: "padding",
+              validator: VueFormGenerator.validators.number
+            }
+          ]
+        },
+        FadeBackground: {
+          fields: [
+            {
+              type: "input",
+              inputType: "number",
+              label: "Background Alpha",
+              model: "alpha",
+              validator: VueFormGenerator.validators.number
+            },
+            {
+              type: "input",
+              inputType: "number",
+              label: "Background Color",
+              model: "bg_color",
+              validator: VueFormGenerator.validators.number
+            }
+          ]
+        },
+        DrawContours: {
+          fields: [
+            {
+              type: "input",
+              inputType: "number",
+              label: "Dilation (Relative to the object area)",
+              model: "dilate_rel",
+              validator: VueFormGenerator.validators.number
+            },
+            {
+              type: "input",
+              inputType: "number",
+              label: "Dilation (Absolute)",
+              model: "dilate_abs",
+              validator: VueFormGenerator.validators.number
+            }
+          ]
+        },
+        ObjectScale: { fields: [] },
+        Exporter: {
+          fields: [
+            {
+              type: "checklist",
+              label: "Exported Images",
+              model: "img_facets",
+              multi: true,
+              multiSelect: true,
+              values: [
+                { value: "color", name: "Color Image" },
+                { value: "gray", name: "Gray Image" },
+                { value: "mask", name: "Object Mask Image" },
+                { value: "bg_white", name: "Faded Background Image" },
+                { value: "color_contours", name: "Color Image with Contours" },
+                {
+                  value: "color_contours_scale",
+                  name: "Color Image with Contours and Scale"
+                }
+              ]
+            },
+            {
+              type: "radios",
+              label: "Extension of the Exported Images",
+              model: "img_ext",
+              values: [".jpeg", ".jpg", ".png", ".gif", ".tif", ".JPG"]
+            }
+          ]
+        }
       },
       formOptions: {
         validateAfterLoad: true,
@@ -236,9 +284,13 @@ export default {
     },
     processProject(project) {
       const path = "/api/projects/" + project.project_id + "/process";
-      axios.get(path).then(res => {
-        this.getTaskStatus(project.project_id);
-      });
+      axios
+        .post(path, {
+          params: this.models
+        })
+        .then(res => {
+          this.getTaskStatus(project.project_id);
+        });
     },
     getProcessFields() {}
   },
@@ -248,3 +300,42 @@ export default {
   }
 };
 </script>
+
+<style>
+fieldset {
+  border: 0;
+}
+
+.panel {
+  margin-bottom: 20px;
+  background-color: #fff;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  border-color: #ddd;
+}
+
+.panel-heading {
+  color: #333;
+  background-color: #f5f5f5;
+  border-color: #ddd;
+
+  padding: 10px 15px;
+  border-bottom: 1px solid transparent;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+.panel-body {
+  padding: 15px;
+}
+
+.field-checklist .wrapper {
+  width: 100%;
+}
+
+.vue-form-generator {
+  text-align: left;
+}
+</style>

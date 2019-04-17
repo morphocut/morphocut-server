@@ -197,7 +197,7 @@ def get_project_files_route(id):
     return jsonify(response_object)
 
 
-@api.route('/projects/<id>/process', methods=['GET'])
+@api.route('/projects/<id>/process', methods=['POST'])
 def process_project_route(id):
     """Launches a background job to process the project with the specified id.
 
@@ -213,14 +213,17 @@ def process_project_route(id):
 
     """
     response_object = {'status': 'success'}
-    if request.method == 'GET':
+    if request.method == 'POST':
         with database.engine.begin() as connection:
             app = flask.current_app
+            params = request.get_json()['params']
+            print('params')
+            print(str(params))
             if current_user.get_task_in_progress('process_project'):
                 print('A process task is currently in progress')
             else:
                 task = current_user.launch_task('morphocut.server.api.process_project',
-                                                'Processing project...', id, id)
+                                                'Processing project...', id, id, params)
                 response_object['job_id'] = task.id
     return jsonify(response_object), 202
 
@@ -464,7 +467,7 @@ def get_finished_task_dicts(tasks):
     return finished_task_dicts
 
 
-def process_project(project_id):
+def process_project(project_id, params):
     """Processes a project.
 
     Parameters
@@ -496,11 +499,11 @@ def process_project(project_id):
                 export_path = os.path.join(
                     abs_project_path, export_filename)
 
-                process_and_zip(abs_project_path, export_path)
+                process_and_zip(abs_project_path, export_path, params)
             return os.path.join(rel_project_path, export_filename)
 
 
-def process_and_zip(import_path, export_path):
+def process_and_zip(import_path, export_path, params):
     """Executes the default pipeline with the specified import and export paths.
 
     Parameters
@@ -522,7 +525,12 @@ def process_and_zip(import_path, export_path):
     if not os.path.exists(export_dirpath):
         os.makedirs(export_dirpath)
 
-    pipeline = get_default_pipeline(import_path, export_path)
+    if params:
+        print('get pipeline with params {}'.format(params))
+        pipeline = get_default_pipeline_parameterized(
+            import_path, export_path, params)
+    else:
+        pipeline = get_default_pipeline(import_path, export_path)
 
     pipeline.execute()
 

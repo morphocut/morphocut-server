@@ -23,7 +23,7 @@
               <th scope="col">Creator</th>
               <th scope="col">Objects</th>
               <th scope="col">Creation Date</th>
-              <th></th>
+              <th scope="col">Action</th>
             </tr>
           </thead>
           <tbody>
