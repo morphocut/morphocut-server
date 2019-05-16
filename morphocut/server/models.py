@@ -70,7 +70,7 @@ class User(database.Model, UserMixin):
     # Define the relationship to Role via UserRoles
     roles = database.relationship('Role', secondary='user_roles')
 
-    def launch_task(self, name, description, project_id, *args, job_timeout=36000, **kwargs):
+    def launch_task(self, name, description, project_id, *args, job_timeout=360000, **kwargs):
         """Enqueues a job with the given function name which is called with the given *args and **kwargs.
 
         The job will be stored in the database with relations this user and the project with the given id.

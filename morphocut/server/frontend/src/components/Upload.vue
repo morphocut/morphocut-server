@@ -187,6 +187,26 @@
           <i class="fa fa-stop" aria-hidden="true"></i>
           Stop Upload
         </button>
+
+        <!-- <div v-if="$refs.upload && $refs.upload.active"> -->
+        <div v-if="$refs.upload && $refs.upload.active" style="margin-top: 2rem;">
+          <div class="progress">
+            <div
+              :class="{'progress-bar': true, 'progress-bar-striped': true, 'bg-info':true}"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              :style="{width: percentUploadedFiles + '%'}"
+            >
+              <span
+                class="justify-content-center d-flex position-absolute w-100"
+                style="color: black;"
+              >
+                <b>{{percentUploadedFiles.toFixed(2)}}% - Uploaded {{numberUploadedFiles}}/{{files.length}} files</b>
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -637,6 +657,28 @@ export default {
         url: "data-source"
       }
     };
+  },
+
+  computed: {
+    percentUploadedFiles: function() {
+      var n = this.numberUploadedFiles;
+      var percentage = 0;
+      if (this.files.length > 0) {
+        percentage = (n / this.files.length) * 100;
+      }
+
+      return percentage;
+    },
+    numberUploadedFiles: function() {
+      var n = 0;
+      this.files.forEach(element => {
+        if (element.success) {
+          n += 1;
+        }
+      });
+
+      return n;
+    }
   },
 
   watch: {

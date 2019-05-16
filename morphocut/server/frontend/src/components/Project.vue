@@ -125,7 +125,10 @@ export default {
           dilate_rel: 0.0,
           dilate_abs: 0.0
         },
-        ObjectScale: {},
+        ObjectScale: {
+          pixels_per_mm: 200,
+          scale_size: 0.1
+        },
         Exporter: {
           img_facets: [
             "color",
@@ -208,7 +211,24 @@ export default {
             }
           ]
         },
-        ObjectScale: { fields: [] },
+        ObjectScale: {
+          fields: [
+            {
+              type: "input",
+              inputType: "number",
+              label: "Pixels per Milimeter",
+              model: "pixels_per_mm",
+              validator: VueFormGenerator.validators.number
+            },
+            {
+              type: "input",
+              inputType: "number",
+              label: "Scale Size (The width of the scale bar in mm)",
+              model: "scale_size",
+              validator: VueFormGenerator.validators.number
+            }
+          ]
+        },
         Exporter: {
           fields: [
             {
