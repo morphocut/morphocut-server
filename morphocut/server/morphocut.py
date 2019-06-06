@@ -22,7 +22,7 @@ from flask import jsonify
 from flask.helpers import send_from_directory
 from flask.blueprints import Blueprint
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
-from flask_login import logout_user
+from flask_login import logout_user, LoginManager
 
 import sqlalchemy
 from sqlalchemy import func
@@ -60,7 +60,8 @@ redis_store.init_app(app)
 migrate.init_app(app, database)
 flask_rq.init_app(app)
 CORS(app)
-user_manager = UserManager(app, database, models.User)
+user_manager = UserManager(
+    app, database, models.User)
 
 
 # Enable batch mode
@@ -99,8 +100,9 @@ def reset_db():
 
 
 @app.cli.command()
-@click.argument('username')
-def add_user(username):
+@click.argument('email')
+@click.option('--admin/--no-admin', default=False)
+def add_user(email, admin):
     """Command function to add a user to the database.
 
     Parameters
@@ -113,7 +115,7 @@ def add_user(username):
     None
 
     """
-    print("Adding user {}:".format(username))
+    print("Adding user with mail {}:".format(email))
     password = getpass("Password: ")
     password_repeat = getpass("Retype Password: ")
 
@@ -125,16 +127,16 @@ def add_user(username):
         print("Passwords do not match!")
         return
 
-    add_user_to_database(username, password)
+    add_user_to_database(email, password, admin)
 
 
-def add_user_to_database(username, password):
+def add_user_to_database(email, password, admin):
     """Adds a user with the specified parameters to the database.
 
     Parameters
     ----------
-    username : str
-        The name of the user that should be added.
+    email : str
+        The mail of the user that should be added.
     password : str
         The password of the user that should be added.
 
@@ -143,18 +145,36 @@ def add_user_to_database(username, password):
     None
 
     """
-    if not models.User.query.filter(models.User.username == username).first():
+    if not models.User.query.filter(models.User.email == email).first():
         user = models.User(
-            username=username,
+            email=email,
             password=user_manager.hash_password(password),
         )
         database.session.add(user)
         database.session.commit()
 
+        if admin:
+            check_admin_role()
+            role = models.Role.query.filter(
+                models.Role.name == app.config['ADMIN_ROLE_NAME']).first()
+            user_role = models.UserRoles(user_id=user.id, role_id=role.id)
+            database.session.add(user_role)
+            database.session.commit()
+
+
+def check_admin_role():
+    # add admin role
+    if not models.Role.query.filter(models.Role.name == app.config['ADMIN_ROLE_NAME']).first():
+        admin_role = models.Role(
+            name=app.config['ADMIN_ROLE_NAME']
+        )
+        database.session.add(admin_role)
+        database.session.commit()
 
 # ===============================================================================
 # Blueprint Registration
 # ===============================================================================
+
 
 # Register API and frontend
 app.register_blueprint(frontend, url_prefix='/frontend')
@@ -167,12 +187,23 @@ app.register_blueprint(api, url_prefix='/api')
 
 
 @app.route("/")
-@login_required
 def index():
     """Redirects index requests to the frontend index page.
 
     """
     print('index request')
+
+    return redirect(url_for("frontend.index"))
+
+
+@app.route("/login")
+@login_required
+def login():
+    """Redirects index requests to the frontend index page.
+
+    """
+    print('login request')
+
     return redirect(url_for("frontend.index"))
 
 

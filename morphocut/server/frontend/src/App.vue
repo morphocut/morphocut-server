@@ -3,20 +3,29 @@
     <b-navbar toggleable="md" type="dark" variant="dark" sticky>
       <b-navbar-toggle target="nav_collapse"></b-navbar-toggle>
 
-      <b-navbar-brand to="/">morphocut</b-navbar-brand>
+      <b-navbar-brand to="/">
+        <img
+          src="/static/morphocut_logo.png"
+          alt="MorphoCut"
+          class="img-thumbnail"
+          style="height: 2.5rem;"
+        >
+      </b-navbar-brand>
 
       <b-collapse is-nav id="nav_collapse">
         <b-navbar-nav>
-          <b-nav-item to="/">Projects</b-nav-item>
-          <b-nav-item to="/tasks">Tasks</b-nav-item>
+          <b-nav-item v-if="user" to="/projects">Projects</b-nav-item>
+          <b-nav-item v-if="user" to="/tasks">Tasks</b-nav-item>
           <!-- <b-nav-item to="/projects">Projects</b-nav-item> -->
         </b-navbar-nav>
-        <b-navbar-nav class="ml-auto">
+        <b-navbar-nav v-if="user" class="ml-auto">
           <b-nav-item-dropdown right>
             <!-- Using button-content slot -->
-            <template slot="button-content">Logged in as {{user.username}}</template>
+            <template slot="button-content">Logged in as {{user.email}}</template>
             <!-- <b-dropdown-item to="/logout">Logout</b-dropdown-item> -->
-            <b-dropdown-item href="http://localhost:5000/logout">Logout</b-dropdown-item>
+
+            <b-dropdown-item v-if="user && user.admin" to="/users">User Administration</b-dropdown-item>
+            <b-dropdown-item href="/logout">Logout</b-dropdown-item>
           </b-nav-item-dropdown>
         </b-navbar-nav>
       </b-collapse>
@@ -46,6 +55,7 @@ export default {
         .get(path)
         .then(res => {
           this.user = res.data.user;
+          console.log("current_user:");
           console.log(this.user);
         })
         .catch(error => {

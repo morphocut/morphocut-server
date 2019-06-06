@@ -62,8 +62,8 @@ class User(database.Model, UserMixin):
         database.Integer(), primary_key=True)
     active = database.Column('is_active', database.Boolean(),
                              nullable=False, server_default='1')
-    username = database.Column(database.String(255),
-                               nullable=False, unique=True)
+    email = database.Column(database.String(255),
+                            nullable=False, unique=True)
     password = database.Column(database.String(
         255), nullable=False, server_default='')
 

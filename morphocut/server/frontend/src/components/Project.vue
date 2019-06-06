@@ -218,6 +218,7 @@ export default {
               inputType: "number",
               label: "Pixels per Milimeter",
               model: "pixels_per_mm",
+              required: true,
               validator: VueFormGenerator.validators.number
             },
             {
@@ -225,6 +226,7 @@ export default {
               inputType: "number",
               label: "Scale Size (The width of the scale bar in mm)",
               model: "scale_size",
+              required: true,
               validator: VueFormGenerator.validators.number
             }
           ]
