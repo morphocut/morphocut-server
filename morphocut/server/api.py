@@ -51,6 +51,41 @@ api = Blueprint("api", __name__)
 # ===============================================================================
 
 
+@api.route("/users", methods=['GET', 'POST'])
+@login_required
+@roles_required('admin')
+def get_current_users_route():
+    """Get the users currently registered.
+
+    Returns
+    -------
+    repsonse : str
+        The jsonified response object.
+
+    """
+    if request.method == 'POST':
+        from morphocut.server import morphocut
+        user = request.get_json()
+        morphocut.add_user_to_database(
+            user['email'], user['password'], user['admin'])
+    else:
+        response_object = {'status': 'success'}
+        users = models.User.query.all()
+        user_list = []
+
+        for u in users:
+            user_list.append({
+                'id': u.id,
+                'email': u.email,
+            })
+
+        response_object = {
+            'users': user_list
+        }
+
+    return jsonify(response_object)
+
+
 @api.route("/users/current", methods=['GET'])
 def get_current_user_route():
     """Get the user currently logged in.
@@ -64,11 +99,17 @@ def get_current_user_route():
     response_object = {'status': 'success'}
     user = current_user
 
-    if user:
+    if user.get_id() is not None:
+        admin_role = False
+        user_role = models.UserRoles.query.filter(
+            models.UserRoles.user_id == user.id).first()
+        if user_role and user_role.role_id == 1:
+            admin_role = True
         response_object = {
             'user': {
                 'id': user.id,
-                'username': user.username,
+                'email': user.email,
+                'admin': admin_role,
             }
         }
     else:
@@ -88,7 +129,7 @@ def get_current_user_tasks_route():
     """
     user = current_user
 
-    if user:
+    if user.get_id() is not None:
         return get_user_jobs_route(user.id)
     else:
         response_object = {'status': 'error'}
@@ -112,7 +153,7 @@ def get_user_jobs_route(id):
     """
     user = models.User.query.filter_by(id=id).first()
 
-    if user:
+    if user.get_id() is not None:
         _tasks = user.get_tasks_in_progress()
         running_tasks = get_running_task_dicts(_tasks)
 
@@ -245,7 +286,7 @@ def get_project_job_status(id):
     """
     user = current_user
 
-    if user:
+    if user.get_id() is not None:
         _tasks = user.get_project_tasks_in_progress(id)
         running_task_dicts = get_running_task_dicts(_tasks)
 
@@ -341,6 +382,28 @@ def remove_project(project_id):
                     models.projects.c.project_id == project_id
                 )
                 connection.execute(stmt)
+
+    return jsonify(response_object)
+
+
+@api.route("/users/<user_id>/remove", methods=['GET'])
+def remove_user(user_id):
+    """Removes a project and all of the connected objects from the database and deletes the corresponding files.
+
+    Parameters
+    ----------
+    project_id : int
+        The id of the project that should be deleted.
+
+    Returns
+    -------
+    repsonse : str
+        The jsonified response object.
+
+    """
+    response_object = {'status': 'success'}
+    models.User.query.filter(models.User.id == user_id).delete()
+    database.session.commit()
 
     return jsonify(response_object)
 
@@ -546,6 +609,8 @@ def get_projects():
         The projects belonging to the current user.
 
     """
+    if current_user.get_id() is None:
+        return
     with database.engine.begin() as connection:
         result = connection.execute(select(
             [models.projects.c.project_id, models.projects.c.name, models.projects.c.path, models.projects.c.creation_date, models.projects.c.user_id, func.count(models.objects.c.object_id).label('object_count')])
@@ -558,7 +623,7 @@ def get_projects():
             user = models.User.query.filter_by(
                 id=project['user_id']).first()
             if user:
-                project['username'] = user.username
+                project['email'] = user.email
         return projects
 
 

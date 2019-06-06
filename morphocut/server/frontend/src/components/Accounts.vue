@@ -12,21 +12,21 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th scope="col">Username</th>
-              <th scope="col">Admin?</th>
+              <th scope="col">ID</th>
+              <th scope="col">Email</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(user, index) in users" :key="index">
-              <td>{{ user.username }}</td>
-              <td>{{ user.admin }}</td>
+              <td>{{ user.id }}</td>
+              <td>{{ user.email }}</td>
               <td>
-                <b-button type="button" class="btn btn-warning btn-sm">Edit</b-button>
                 <button
                   type="button"
                   class="btn btn-danger btn-sm"
                   style="margin-left: 0.5rem;"
+                  v-on:click="removeUser(user.id)"
                 >Delete</button>
               </td>
             </tr>
@@ -36,13 +36,13 @@
     </div>
     <b-modal ref="addUserModal" id="user-modal" title="Add a new user" hide-footer>
       <b-form @submit="onSubmit" @reset="onReset" class="w-100">
-        <b-form-group id="form-name-group" label="Name:" label-for="form-name-input">
+        <b-form-group id="form-email-group" label="Email:" label-for="form-email-input">
           <b-form-input
-            id="form-name-input"
+            id="form-email-input"
             type="text"
-            v-model="addUserForm.username"
+            v-model="addUserForm.email"
             required
-            placeholder="Enter name"
+            placeholder="Enter email"
           ></b-form-input>
         </b-form-group>
         <b-form-group id="form-password-group" label="Password:" label-for="form-password-input">
@@ -72,7 +72,7 @@ export default {
     return {
       users: [],
       addUserForm: {
-        username: "user",
+        email: "user@user.com",
         password: "password",
         admin: false
       }
@@ -94,6 +94,8 @@ export default {
     },
     addUser(payload) {
       const path = "/api/users";
+      console.log(payload);
+
       axios
         .post(path, payload)
         .then(() => {
@@ -105,11 +107,14 @@ export default {
           this.getUsers();
         });
     },
-    removeDataset(id) {
-      console.log("remove user: " + id);
+    removeUser(user_id) {
+      const path = "/api/users/" + user_id + "/remove";
+      axios.get(path).then(res => {
+        this.getUsers();
+      });
     },
     initForm() {
-      this.addUserForm.username = "";
+      this.addUserForm.email = "";
       this.addUserForm.password = "";
       this.addUserForm.admin = false;
     },
@@ -117,7 +122,7 @@ export default {
       evt.preventDefault();
       this.$refs.addUserModal.hide();
       const payload = {
-        username: this.addUserForm.username,
+        email: this.addUserForm.email,
         password: this.addUserForm.password,
         admin: this.addUserForm.admin
       };

@@ -1,13 +1,12 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from './views/Home.vue'
-import Ping from '@/components/Ping';
 import Upload from '@/components/Upload';
 import Tasks from '@/components/Tasks';
 import Project from '@/components/Project';
-// import Datasets from '@/components/Datasets';
 import Projects from '@/components/Projects';
 import Accounts from '@/components/Accounts';
+import Landing from '@/components/Landing';
 
 Vue.use(Router)
 
@@ -18,8 +17,8 @@ export default new Router({
   base: process.env.BASE_URL,
   routes: [{
       path: '/',
-      name: 'Projects',
-      component: Projects
+      name: 'Landing',
+      component: Landing
     },
     {
       path: '/tiles',
@@ -28,11 +27,6 @@ export default new Router({
       // this generates a separate chunk (about.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import( /* webpackChunkName: "tiles" */ './views/Tiles.vue')
-    },
-    {
-      path: '/ping',
-      name: 'Ping',
-      component: Ping,
     },
     {
       path: '/tasks',

@@ -13,10 +13,26 @@ frontend = Blueprint("frontend", __name__,
 
 
 @frontend.route('/', defaults={'path': ''})
-@frontend.route('/<path:path>')
-@login_required
 def index(path):
+    print('#####################################################')
     print('index: ' + str(path))
+    print('#####################################################')
+    response = send_from_directory("frontend/dist", 'index.html')
+    del response.headers['Expires']
+    del response.headers['ETag']
+    response.headers['Last-Modified'] = datetime.datetime.now()
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+
+    return response
+
+
+@frontend.route('/<path:path>', defaults={'path': ''})
+@login_required
+def routes(path):
+    print('#####################################################')
+    print('not index: ' + str(path))
+    print('#####################################################')
     response = send_from_directory("frontend/dist", 'index.html')
     del response.headers['Expires']
     del response.headers['ETag']
