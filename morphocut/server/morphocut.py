@@ -58,7 +58,7 @@ if 'MORPHOCUT_SETTINGS' in os.environ:
 database.init_app(app)
 redis_store.init_app(app)
 migrate.init_app(app, database)
-flask_rq.init_app(app)
+# flask_rq.init_app(app)
 CORS(app)
 user_manager = UserManager(app, database, models.User)
 
