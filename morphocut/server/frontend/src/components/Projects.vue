@@ -8,14 +8,14 @@
       <div class="project-divider"></div>
     </div>
 
-    <b-button
-      type="button"
-      class="btn btn-success project-button"
-      v-b-modal.project-modal
-    >Add Project</b-button>
+    <p>Here you can see all of your projects. Click on the project name to access the project.</p>
+
+    <b-button type="button" class="btn btn-success project-button" v-b-modal.project-modal>
+      <font-awesome-icon icon="plus"></font-awesome-icon>&nbsp;Add Project
+    </b-button>
 
     <div class="row">
-      <div class="col-12">
+      <div class="col-6" style="margin: auto;">
         <table class="table table-hover table-sm">
           <thead class="thead-light">
             <tr>
@@ -33,16 +33,18 @@
                   :to="{ name: 'Project', params: { project_id: project.project_id }}"
                 >{{ project.name }}</b-link>
               </td>
-              <td>{{ project.username }}</td>
+              <td>{{ project.email }}</td>
               <td>{{ project.object_count }}</td>
-              <td>{{ project.creation_date }}</td>
+              <td>{{ (new Date(project.creation_date)).toUTCString() }}</td>
               <td>
                 <button
                   type="button"
                   class="btn btn-danger btn-sm"
                   style="margin-left: 0.5rem;"
                   v-on:click="removeProject(project.project_id)"
-                >Delete</button>
+                >
+                  <font-awesome-icon icon="trash"/>&nbsp;Delete
+                </button>
               </td>
             </tr>
           </tbody>
@@ -110,38 +112,18 @@ export default {
           this.getProjects();
         });
     },
-    processProject(project) {
-      const path = "/api/projects/" + project.project_id + "/process";
-      axios.get(path).then(res => {
-        console.log(res);
-        const job_id = res.data.job_id;
-        console.log(job_id);
-        this.getStatus(job_id);
-      });
-    },
     removeProject(project_id) {
-      const path = "/api/projects/" + project_id + "/remove";
-      axios.get(path).then(res => {
-        this.getProjects();
-      });
-    },
-    getStatus(job_id) {
-      const path = "/api/jobs/" + job_id;
-      axios.get(path).then(res => {
-        const jobStatus = res.data.job_status;
-        console.log(res);
-
-        if (jobStatus === "finished" || jobStatus === "failed") {
-          console.log(res.data.job_result);
-          return false;
-        }
-        setTimeout(
-          function() {
-            this.getStatus(res.data.job_id);
-          }.bind(this),
-          1000
-        );
-      });
+      this.$dialog
+        .confirm("Please confirm to continue")
+        .then(
+          function(dialog) {
+            const path = "/api/projects/" + project_id + "/remove";
+            axios.get(path).then(res => {
+              this.getProjects();
+            });
+          }.bind(this)
+        )
+        .catch(function() {});
     },
     initForm() {
       this.addProjectForm.id = 0;

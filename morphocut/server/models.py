@@ -1,6 +1,7 @@
 from sqlalchemy import Table, Column, ForeignKey, Index
 
 import datetime
+import json
 
 from sqlalchemy.types import Integer, BigInteger, String, DateTime, PickleType, Boolean, Text, Float
 from sqlalchemy.sql.schema import UniqueConstraint, CheckConstraint
@@ -100,9 +101,10 @@ class User(database.Model, UserMixin):
                                      name, *args, **kwargs,
                                      job_timeout=job_timeout)
         task = Task(id=rq_job.get_id(), name=name, description=description,
-                    user_id=self.id, project_id=project_id)
+                    user_id=self.id, project_id=project_id, meta=json.dumps({'scheduled_at': datetime.datetime.now().timestamp()}))
         database.session.add(task)
         database.session.commit()
+        print("new task in db")
         return task
 
     def get_tasks_in_progress(self):
@@ -266,6 +268,7 @@ class Task(database.Model):
         database.Integer, database.ForeignKey('projects.project_id', ondelete="CASCADE"))
     complete = database.Column(database.Boolean, default=False)
     result = database.Column(database.String())
+    meta = database.Column(JSON())
 
     def get_rq_job(self):
         """Get the redis job connected to this task.

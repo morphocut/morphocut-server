@@ -7,6 +7,7 @@ import Project from '@/components/Project';
 import Projects from '@/components/Projects';
 import Accounts from '@/components/Accounts';
 import Landing from '@/components/Landing';
+import Imprint from '@/components/Imprint';
 
 Vue.use(Router)
 
@@ -63,6 +64,11 @@ export default new Router({
       path: '/users',
       name: 'Accounts',
       component: Accounts,
+    },
+    {
+      path: '/imprint',
+      name: 'Imprint',
+      component: Imprint,
     },
   ]
 })

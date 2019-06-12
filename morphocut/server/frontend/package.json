@@ -8,6 +8,10 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.19",
+    "@fortawesome/free-brands-svg-icons": "^5.9.0",
+    "@fortawesome/free-solid-svg-icons": "^5.9.0",
+    "@fortawesome/vue-fontawesome": "^0.1.6",
     "@xkeshi/image-compressor": "^0.5.3",
     "axios": "^0.18.0",
     "bootstrap": "^4.1.1",
@@ -22,7 +26,8 @@
     "vue-piczoom": "^1.0.6",
     "vue-router": "^3.0.1",
     "vue-upload-component": "^2.8.18",
-    "vue2-leaflet": "^1.0.2"
+    "vue2-leaflet": "^1.0.2",
+    "vuejs-dialog": "^1.4.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.5.5",

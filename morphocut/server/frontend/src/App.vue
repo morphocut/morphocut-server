@@ -15,23 +15,44 @@
       <b-collapse is-nav id="nav_collapse">
         <b-navbar-nav>
           <b-nav-item v-if="user" to="/projects">Projects</b-nav-item>
-          <b-nav-item v-if="user" to="/tasks">Tasks</b-nav-item>
+          <!-- <b-nav-item v-if="user" to="/tasks">Tasks</b-nav-item> -->
           <!-- <b-nav-item to="/projects">Projects</b-nav-item> -->
         </b-navbar-nav>
         <b-navbar-nav v-if="user" class="ml-auto">
           <b-nav-item-dropdown right>
-            <!-- Using button-content slot -->
-            <template slot="button-content">Logged in as {{user.email}}</template>
-            <!-- <b-dropdown-item to="/logout">Logout</b-dropdown-item> -->
+            <template slot="button-content">
+              <font-awesome-icon icon="user"></font-awesome-icon>
+              &nbsp;Logged in as {{user.email}}
+            </template>
 
-            <b-dropdown-item v-if="user && user.admin" to="/users">User Administration</b-dropdown-item>
-            <b-dropdown-item href="/logout">Logout</b-dropdown-item>
+            <b-dropdown-item v-if="user.admin" to="/users">
+              <font-awesome-icon icon="users"></font-awesome-icon>&nbsp;User Administration
+            </b-dropdown-item>
+            <b-dropdown-item href="/user/change-password">
+              <font-awesome-icon icon="key"></font-awesome-icon>&nbsp;Change password
+            </b-dropdown-item>
+            <b-dropdown-item href="/logout">
+              <font-awesome-icon icon="sign-out-alt"></font-awesome-icon>&nbsp;Logout
+            </b-dropdown-item>
           </b-nav-item-dropdown>
         </b-navbar-nav>
       </b-collapse>
     </b-navbar>
 
     <router-view/>
+
+    <b-navbar class="footer" toggleable="md" type="dark" variant="dark" fixed="bottom">
+      <b-navbar-toggle target="nav_collapse"></b-navbar-toggle>
+
+      <b-collapse is-nav id="nav_collapse">
+        <b-navbar-nav style="margin: auto;">
+          <b-nav-item to="/imprint">Imprint</b-nav-item>
+          <b-nav-item href="https://github.com/morphocut/morphocut">
+            <font-awesome-icon :icon="['fab', 'github']"></font-awesome-icon>&nbsp;Github
+          </b-nav-item>
+        </b-navbar-nav>
+      </b-collapse>
+    </b-navbar>
   </div>
 </template>
 
@@ -249,5 +270,28 @@ pre {
 .project {
   margin-left: 2rem;
   margin-right: 2rem;
+}
+
+.footer {
+  font-size: 1rem;
+  height: 2rem;
+  text-align: center;
+  color: darkgray;
+}
+
+.col-centered {
+  margin: auto;
+}
+
+.row-no-margin {
+  margin: 0 !important;
+}
+
+.dg-content-cont {
+  font-family: "Avenir", Helvetica, Arial, sans-serif;
+}
+
+.tab-pane {
+  outline: none;
 }
 </style>

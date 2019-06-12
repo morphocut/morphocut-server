@@ -11,11 +11,19 @@
     <div class="row">
       <div class="col-12">
         <b-tabs content-class="mt-3" small v-model="tabIndex">
-          <b-tab active title="Upload">
+          <b-tab active>
+            <template slot="title">
+              <font-awesome-icon icon="upload"></font-awesome-icon>&nbsp;Upload
+            </template>
+            <p>Here you can upload new files to the project.</p>
             <Upload></Upload>
           </b-tab>
 
-          <b-tab title="File View">
+          <b-tab>
+            <template slot="title">
+              <font-awesome-icon icon="images"></font-awesome-icon>&nbsp;File View
+            </template>
+            <p>Here you can see the files of this project.</p>
             <div class="row">
               <div
                 class="col-12"
@@ -30,7 +38,46 @@
             </div>
           </b-tab>
 
-          <b-tab title="Process">
+          <b-tab>
+            <template slot="title">
+              <font-awesome-icon icon="cogs"></font-awesome-icon>&nbsp;Processing
+            </template>
+
+            <p>Here you can process the files. The files are processed by following the pipeline shown below. To start, configure the settings and press "Process".</p>
+
+            <h4 id="tasks-title" class="tasks-title">
+              <b>Process Settings:</b>
+            </h4>
+            <div class="row">
+              <div class="col-4" style="margin-left: auto; margin-right: auto;">
+                <div v-for="(node, index) in nodes" :key="index">
+                  <b-button
+                    v-b-toggle="'collapse-'+index"
+                    variant="outline-secondary"
+                    style="width: 100%;"
+                    size="sm"
+                  >{{ node['name'] }}</b-button>
+                  <b-collapse :id="'collapse-'+index" class="mt-2">
+                    <b-card>
+                      <p>{{ node['description'] }}</p>
+                      <vue-form-generator
+                        :ref="'vfg-'+node['name']"
+                        :schema="schema[node['name']]"
+                        :model="models[node['name']]"
+                        :options="formOptions"
+                        :data-form-name="node['name']"
+                      ></vue-form-generator>
+                    </b-card>
+                  </b-collapse>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="project-divider"
+              style="margin-top: 1rem; margin-bottom: 1rem; margin-left: 10rem; margin-right: 10rem;"
+            ></div>
+
             <b-button
               type="button"
               variant="primary"
@@ -38,50 +85,33 @@
               size="lg"
               v-if="project"
               v-on:click="processProject(project)"
-              :to="{ name: 'Tasks' }"
+              style="margin-bottom: 5%;"
             >Process</b-button>
-            <!-- :to="{ name: 'Tasks' }" -->
-            <div
-              class="project-divider"
-              style="margin-top: 1rem; margin-bottom: 1rem; margin-left: 10rem; margin-right: 10rem;"
-            ></div>
-            <h4 id="tasks-title" class="tasks-title">
-              <b>Process Settings:</b>
-            </h4>
-            <div class="row">
-              <div class="col-4" style="margin-left: auto; margin-right: auto;">
-                <div
-                  v-for="(node, index) in ['DataLoader', 'VignetteCorrector', 'BGR2Gray', 'ThresholdOtsu', 'ExtractRegions', 'FadeBackground', 'DrawContours', 'ObjectScale', 'Exporter']"
-                  :key="index"
-                >
-                  <b-button
-                    v-b-toggle="'collapse-'+index"
-                    variant="outline-secondary"
-                    style="width: 100%;"
-                    size="sm"
-                  >{{ node }}</b-button>
-                  <b-collapse :id="'collapse-'+index" class="mt-2">
-                    <b-card>
-                      <vue-form-generator
-                        :schema="schema[node]"
-                        :model="models[node]"
-                        :options="formOptions"
-                      ></vue-form-generator>
-                    </b-card>
-                  </b-collapse>
-                </div>
-              </div>
-            </div>
           </b-tab>
 
-          <b-tab title="Tasks">
+          <b-tab>
+            <template slot="title">
+              <font-awesome-icon icon="file-download"></font-awesome-icon>&nbsp;Tasks
+            </template>
+            <p>Here you can see the tasks of this project. You can see the progress of the running tasks and download the results of the finished tasks.</p>
             <div v-if="project">
-              <Tasks :getAction="getProjectTasksPath()"></Tasks>
+              <Tasks ref="tasks-component" :getAction="getProjectTasksPath()"></Tasks>
             </div>
           </b-tab>
         </b-tabs>
       </div>
     </div>
+    <b-modal ref="invalid-modal" hide-footer title="Invalid Input">
+      <div class="d-block text-center">
+        <p>Can not start processing. Please check that all input parameters are filled in and valid. Found invalid inputs in the following settings:</p>
+        <p
+          class="no-margin"
+          v-for="(node, index) in settingsErrors"
+          :key="index"
+        >{{node.node}} &rarr; {{node.setting}}</p>
+      </div>
+      <b-button class="mt-3" variant="secondary" block @click="hideModal">Close</b-button>
+    </b-modal>
   </div>
 </template>
 
@@ -106,7 +136,58 @@ export default {
       running_tasks: [],
       finished_tasks: [],
       tabIndex: 0,
+      allSettingsValid: false,
+      validSettings: {},
+      settingsErrors: [],
+      nodes: [
+        {
+          name: "DataLoader",
+          description:
+            "This node loads the images with the specified extensions for further processing."
+        },
+        {
+          name: "VignetteCorrector",
+          description:
+            "This node is responsible for correcting any form of vignetting effects in the image to ensure that the background is consistent throughout the image."
+        },
+        {
+          name: "BGR2Gray",
+          description:
+            "This node converts the images from the RGB colorspace into grey-value images."
+        },
+        {
+          name: "ThresholdOtsu",
+          description:
+            "This node performs thresholding using the Otsu method. This is the most crucial step, as it separates the objects from the image background."
+        },
+        {
+          name: "ExtractRegions",
+          description:
+            "This node extracts the segmented objects from the image. Additionally, all of the image features are calculated here."
+        },
+        {
+          name: "FadeBackground",
+          description:
+            "This node generates an image with a faded background in order to have a better view of the object."
+        },
+        {
+          name: "DrawContours",
+          description:
+            "This node generates an image with contours around the object to have a better view of its shape."
+        },
+        {
+          name: "ObjectScale",
+          description:
+            "This node generates an image with a scale bar showing the object size in milimeters."
+        },
+        {
+          name: "Exporter",
+          description:
+            "This node exports the generated images into an Ecotaxa compatible zipfile."
+        }
+      ],
       models: {
+        Started_UTC: null,
         DataLoader: {
           image_extensions: [".jpeg", ".jpg", ".png", ".gif", ".tif", ".JPG"]
         },
@@ -126,7 +207,7 @@ export default {
           dilate_abs: 0.0
         },
         ObjectScale: {
-          pixels_per_mm: 200,
+          pixels_per_mm: null,
           scale_size: 0.1
         },
         Exporter: {
@@ -162,16 +243,20 @@ export default {
             {
               type: "input",
               inputType: "number",
-              label: "Minimum Object Area",
+              help: "The minimum area in pixels for an object to be segmented",
+              hint: "in pixels",
+              label: "Minimum Area",
               model: "min_area",
-              validator: VueFormGenerator.validators.number
+              validator: [VueFormGenerator.validators.number, "positiveNumber"]
             },
             {
               type: "input",
               inputType: "number",
+              help: "The padding in pixels around the object in the image",
+              hint: "in pixels",
               label: "Padding",
               model: "padding",
-              validator: VueFormGenerator.validators.number
+              validator: [VueFormGenerator.validators.number, "positiveNumber"]
             }
           ]
         },
@@ -180,16 +265,20 @@ export default {
             {
               type: "input",
               inputType: "number",
-              label: "Background Alpha",
+              label: "Background Transparency",
+              help: "Range 0 to 1 from normal to fully colored background",
+              hint: "number in the range from 0 to 1",
               model: "alpha",
-              validator: VueFormGenerator.validators.number
+              validator: [VueFormGenerator.validators.number, "range01"]
             },
             {
               type: "input",
               inputType: "number",
               label: "Background Color",
+              help: "Range 0 to 1 from black to white",
+              hint: "number in the range from 0 to 1",
               model: "bg_color",
-              validator: VueFormGenerator.validators.number
+              validator: [VueFormGenerator.validators.number, "range01"]
             }
           ]
         },
@@ -198,16 +287,22 @@ export default {
             {
               type: "input",
               inputType: "number",
-              label: "Dilation (Relative to the object area)",
+              label: "Relative Dilation",
+              help:
+                "The distance from the contour to the object, relative to the object area",
+              hint: "in % of the object area",
               model: "dilate_rel",
-              validator: VueFormGenerator.validators.number
+              validator: [VueFormGenerator.validators.number, "positiveNumber"]
             },
             {
               type: "input",
               inputType: "number",
-              label: "Dilation (Absolute)",
+              label: "Absolute Dilation",
+              help:
+                "The distance from the contour to the object in pixels, independent from the object area",
+              hint: "in pixels",
               model: "dilate_abs",
-              validator: VueFormGenerator.validators.number
+              validator: [VueFormGenerator.validators.number, "positiveNumber"]
             }
           ]
         },
@@ -217,17 +312,21 @@ export default {
               type: "input",
               inputType: "number",
               label: "Pixels per Milimeter",
+              help: "The pixels per millimeter scale of the image",
+              hint: "in pixels/mm",
               model: "pixels_per_mm",
               required: true,
-              validator: VueFormGenerator.validators.number
+              validator: [VueFormGenerator.validators.number, "positiveNumber"]
             },
             {
               type: "input",
               inputType: "number",
-              label: "Scale Size (The width of the scale bar in mm)",
+              label: "Scale Size",
+              help: "The width of the scale bar in mm",
+              hint: "in mm",
               model: "scale_size",
               required: true,
-              validator: VueFormGenerator.validators.number
+              validator: [VueFormGenerator.validators.number, "positiveNumber"]
             }
           ]
         },
@@ -254,6 +353,8 @@ export default {
             {
               type: "radios",
               label: "Extension of the Exported Images",
+              hint:
+                "Note: Choosing .png or .tif can lead to substantially larger filesizes.",
               model: "img_ext",
               values: [".jpeg", ".jpg", ".png", ".gif", ".tif", ".JPG"]
             }
@@ -275,6 +376,35 @@ export default {
     }
   },
   methods: {
+    showModal() {
+      this.$refs["invalid-modal"].show();
+    },
+    hideModal() {
+      this.$refs["invalid-modal"].hide();
+    },
+    checkFormValidation() {
+      /* 
+      hacky code to check if there are errors.
+      find elements with the error class, as those are instantiated, when the vue-form-generator validation fails.
+      */
+      var errors = this.$el.querySelectorAll(".error");
+      var errorLocations = [];
+      if (!(errors == null || errors == undefined)) {
+        console.log("Invalid Input: ", errors);
+
+        // hacky code to find the error locations
+        errors.forEach(element => {
+          var v = element.closest(".vue-form-generator");
+          var s = element.firstChild.firstChild;
+          errorLocations.push({
+            node: v.dataset.formName,
+            setting: s.innerHTML
+          });
+        });
+      }
+      this.settingsErrors = errorLocations;
+      return this.settingsErrors;
+    },
     getProject() {
       const path = "/api/projects/" + this.$route.params.project_id;
       axios
@@ -305,13 +435,22 @@ export default {
         });
     },
     processProject(project) {
+      var errors = this.checkFormValidation();
+      if (errors.length > 0) {
+        this.showModal();
+        return false;
+      }
       const path = "/api/projects/" + project.project_id + "/process";
+      console.log("process project");
+      this.models.Started_UTC = new Date();
       axios
         .post(path, {
           params: this.models
         })
         .then(res => {
-          this.getTaskStatus(project.project_id);
+          // jump to tasks tab and fetch task status from server
+          this.tabIndex = 3;
+          this.$refs["tasks-component"].getTaskStatus();
         });
     },
     getProcessFields() {}
