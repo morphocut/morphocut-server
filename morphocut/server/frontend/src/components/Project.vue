@@ -108,7 +108,7 @@ export default {
       tabIndex: 0,
       models: {
         DataLoader: {
-          image_extensions: [".jpeg", ".jpg", ".png", ".gif", ".tif", ".JPG"]
+          image_extensions: [".jpeg", ".jpg", ".png", ".gif", ".tif"]
         },
         VignetteCorrector: {},
         BGR2Gray: {},
@@ -150,7 +150,7 @@ export default {
               model: "image_extensions",
               multi: true,
               multiSelect: true,
-              values: [".jpeg", ".jpg", ".png", ".gif", ".tif", ".JPG"]
+              values: [".jpeg", ".jpg", ".png", ".gif", ".tif"]
             }
           ]
         },
@@ -255,7 +255,7 @@ export default {
               type: "radios",
               label: "Extension of the Exported Images",
               model: "img_ext",
-              values: [".jpeg", ".jpg", ".png", ".gif", ".tif", ".JPG"]
+              values: [".jpeg", ".jpg", ".png", ".gif", ".tif"]
             }
           ]
         }
