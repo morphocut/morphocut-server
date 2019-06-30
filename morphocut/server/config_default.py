@@ -29,8 +29,7 @@ USER_ENABLE_EMAIL = True        # Disable email authentication
 USER_ENABLE_USERNAME = False    # Enable username authentication
 USER_ENABLE_REGISTER = False
 USER_ENABLE_CONFIRM_EMAIL = False
-USER_EMAIL_SENDER_EMAIL = ''
-USER_EMAIL_SENDER_EMAIL = USER_APP_NAME
+USER_EMAIL_SENDER_EMAIL = 'morphocut@morphocut'
 
 ADMIN_ROLE_NAME = 'admin'
 
