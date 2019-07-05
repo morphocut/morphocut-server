@@ -592,7 +592,6 @@
 import Cropper from "cropperjs";
 import ImageCompressor from "@xkeshi/image-compressor";
 import FileUpload from "vue-upload-component";
-// import PicZoom from "vue-piczoom";
 import "viewerjs/dist/viewer.css";
 import Viewer from "v-viewer";
 import Vue from "vue";
