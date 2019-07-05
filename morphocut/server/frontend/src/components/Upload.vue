@@ -46,10 +46,10 @@
               </td>
             </tr>-->
 
-            <tr v-for="(file, index) in files" :key="file.id">
+            <tr v-for="(file, _) in files" :key="file.id">
               <!-- <td>{{index}}</td> -->
               <td>
-                <img v-if="file.thumb" :src="file.thumb" width="40" height="auto">
+                <img v-if="file.thumb" :src="file.thumb" width="40" height="auto" />
                 <span v-else>No Image</span>
                 <!-- <div class="filename">{{file.fileObject}}</div> -->
               </td>
@@ -95,7 +95,7 @@
                   width="40"
                   height="auto"
                 ></pic-zoom>-->
-                <img v-if="file.filepath" :src="file.filepath" width="40" height="auto">
+                <img v-if="file.filepath" :src="file.filepath" width="40" height="auto" />
                 <span v-else>No Image</span>
                 <!-- <viewer inline="false" fullscreen="true" zoomable="true">
                   <img :src="file.filepath" :key="file.filepath">
@@ -213,12 +213,12 @@
     <div class="option" v-show="isOption">
       <div class="form-group">
         <label for="accept">Accept:</label>
-        <input type="text" id="accept" class="form-control" v-model="accept">
+        <input type="text" id="accept" class="form-control" v-model="accept" />
         <small class="form-text text-muted">Allow upload mime type</small>
       </div>
       <div class="form-group">
         <label for="extensions">Extensions:</label>
-        <input type="text" id="extensions" class="form-control" v-model="extensions">
+        <input type="text" id="extensions" class="form-control" v-model="extensions" />
         <small class="form-text text-muted">Allow upload file extension</small>
       </div>
       <div class="form-group">
@@ -232,7 +232,7 @@
               id="put-action"
               value
               v-model="putAction"
-            > Off
+            /> Off
           </label>
         </div>
         <div class="form-check">
@@ -244,7 +244,7 @@
               id="put-action"
               value="/upload/put"
               v-model="putAction"
-            > On
+            /> On
           </label>
         </div>
         <small class="form-text text-muted">After the shutdown, use the POST method to upload</small>
@@ -258,18 +258,18 @@
           id="thread"
           class="form-control"
           v-model.number="thread"
-        >
+        />
         <small
           class="form-text text-muted"
         >Also upload the number of files at the same time (number of threads)</small>
       </div>
       <div class="form-group">
         <label for="size">Max size:</label>
-        <input type="number" min="0" id="size" class="form-control" v-model.number="size">
+        <input type="number" min="0" id="size" class="form-control" v-model.number="size" />
       </div>
       <div class="form-group">
         <label for="minSize">Min size:</label>
-        <input type="number" min="0" id="minSize" class="form-control" v-model.number="minSize">
+        <input type="number" min="0" id="minSize" class="form-control" v-model.number="minSize" />
       </div>
       <div class="form-group">
         <label for="autoCompress">Automatically compress:</label>
@@ -279,7 +279,7 @@
           id="autoCompress"
           class="form-control"
           v-model.number="autoCompress"
-        >
+        />
         <small
           class="form-text text-muted"
           v-if="autoCompress > 0"
@@ -290,7 +290,7 @@
       <div class="form-group">
         <div class="form-check">
           <label class="form-check-label">
-            <input type="checkbox" id="add-index" class="form-check-input" v-model="addIndex"> Start position to add
+            <input type="checkbox" id="add-index" class="form-check-input" v-model="addIndex" /> Start position to add
           </label>
         </div>
         <small class="form-text text-muted">Add a file list to start the location to add</small>
@@ -299,7 +299,7 @@
       <div class="form-group">
         <div class="form-check">
           <label class="form-check-label">
-            <input type="checkbox" id="drop" class="form-check-input" v-model="drop"> Drop
+            <input type="checkbox" id="drop" class="form-check-input" v-model="drop" /> Drop
           </label>
         </div>
         <small class="form-text text-muted">Drag and drop upload</small>
@@ -312,7 +312,7 @@
               id="drop-directory"
               class="form-check-input"
               v-model="dropDirectory"
-            > Drop directory
+            /> Drop directory
           </label>
         </div>
         <small class="form-text text-muted">Not checked, filter the dragged folder</small>
@@ -320,7 +320,7 @@
       <div class="form-group">
         <div class="form-check">
           <label class="form-check-label">
-            <input type="checkbox" id="upload-auto" class="form-check-input" v-model="uploadAuto"> Auto start
+            <input type="checkbox" id="upload-auto" class="form-check-input" v-model="uploadAuto" /> Auto start
           </label>
         </div>
         <small class="form-text text-muted">Automatically activate upload</small>
@@ -360,7 +360,7 @@
                   id="name"
                   placeholder="Please enter a file name"
                   v-model="addData.name"
-                >
+                />
                 <small class="form-text text-muted">
                   Such as
                   <code>filename.txt</code>
@@ -375,7 +375,7 @@
                   id="type"
                   placeholder="Please enter the MIME type"
                   v-model="addData.type"
-                >
+                />
                 <small class="form-text text-muted">
                   Such as
                   <code>text/plain</code>
@@ -432,7 +432,7 @@
                   id="name"
                   placeholder="Please enter a file name"
                   v-model="editFile.name"
-                >
+                />
               </div>
               <div
                 class="form-group"
@@ -440,7 +440,7 @@
               >
                 <label>Image:</label>
                 <div class="edit-image">
-                  <img :src="editFile.blob" ref="editImage">
+                  <img :src="editFile.blob" ref="editImage" />
                 </div>
 
                 <div class="edit-image-tool">
@@ -503,7 +503,7 @@
           class="image"
           :key="source"
           :alt="source.split('?image=').pop()"
-        >
+        />
       </template>
     </div>
   </div>
@@ -616,8 +616,8 @@ export default {
       project: null,
       files: [],
       project_files: [],
-      accept: "image/png,image/gif,image/jpeg,image/webp",
-      extensions: "gif,jpg,jpeg,png,webp",
+      // accept: "*/*",
+      // extensions: "gif,jpg,jpeg,png,webp,tif",
       minSize: 1024,
       size: 1024 * 1024 * 10,
       multiple: true,
