@@ -27,7 +27,7 @@
             <tr v-for="(task, index) in running_tasks" :key="index">
               <td scope="col" v-if="showProject">{{task.project_name}}</td>
               <td>{{ task.status }}</td>
-              <td>{{ task.started_at }}</td>
+              <td>{{ dateFromMeta(task.meta, "scheduled_at") }}</td>
               <td>
                 <b-progress>
                   <b-progress-bar :value="task.progress">
@@ -49,7 +49,9 @@
             <tr>
               <th scope="col" v-if="showProject">Project</th>
               <th scope="col">Status</th>
+              <th scope="col">Started At</th>
               <th scope="col">Download</th>
+              <th scope="col" class="metadata">Metadata</th>
               <th scope="col">Action</th>
             </tr>
           </thead>
@@ -61,6 +63,7 @@
                 >{{ task.project_name }}</b-link>
               </td>
               <td>{{ task.status }}</td>
+              <td>{{ dateFromMeta(task.meta, "scheduled_at") }}</td>
               <td>
                 <b-button
                   variant="success"
@@ -68,7 +71,22 @@
                   style="margin-left: 0.5rem;"
                   v-if="task.download_path"
                   :href="task.download_path"
-                >Download</b-button>
+                >
+                  <font-awesome-icon icon="download"></font-awesome-icon>&nbsp;Download
+                </b-button>
+              </td>
+              <td class="metadata">
+                <b-button
+                  variant="secondary"
+                  size="sm"
+                  style="margin-left: 0.5rem;"
+                  v-b-toggle="'collapse-'+index"
+                >
+                  <font-awesome-icon icon="file-alt"/>&nbsp;Metadata
+                </b-button>
+                <b-collapse :id="'collapse-'+index" class="mt-2">
+                  <tree-item :item="task.meta" item_key="Metadata"></tree-item>
+                </b-collapse>
               </td>
               <td>
                 <b-button
@@ -76,7 +94,9 @@
                   size="sm"
                   style="margin-left: 0.5rem;"
                   v-on:click="removeTask(task.id)"
-                >Delete</b-button>
+                >
+                  <font-awesome-icon icon="trash"/>&nbsp;Delete
+                </b-button>
               </td>
             </tr>
           </tbody>
@@ -106,15 +126,39 @@
   margin-left: 2rem;
   margin-right: 2rem;
 }
+
+.item {
+  cursor: pointer;
+}
+.bold {
+  font-weight: bold;
+}
+ul {
+  padding-left: 1em;
+  line-height: 1.5em;
+  list-style-type: dot;
+}
+
+.metadata {
+  width: 20rem;
+}
 </style>
 
 <script>
 import axios from "axios";
+import TreeItem from "@/components/TreeItem.vue";
 export default {
+  components: {
+    TreeItem
+  },
   data() {
     return {
       running_tasks: [],
-      finished_tasks: []
+      finished_tasks: [],
+      date_options: {
+        day: "2-digit",
+        month: "2-digit"
+      }
     };
   },
   props: {
@@ -123,6 +167,31 @@ export default {
     showProject: false
   },
   methods: {
+    showTaskStatus(status) {
+      switch (status) {
+        case "size":
+          return "The file is too small";
+        case "extension":
+          return "The file has an invalid extension";
+        case "timeout":
+          return "Timeout during transmission";
+        case "abort":
+          return "The transmission has been aborted";
+        case "network":
+          return "Network error";
+        case "server":
+          return "Server error";
+        case "denied":
+          return "The file was denied by the server";
+        default:
+          return "Unknown Error";
+      }
+    },
+    dateFromMeta(meta, name) {
+      return meta[name] !== undefined && meta[name] !== null
+        ? new Date(meta[name] * 1000).toLocaleString(this.date_options)
+        : "N/A";
+    },
     getTaskStatus() {
       const path = this.getAction;
       console.log("get task status: " + this.getAction);
@@ -153,10 +222,17 @@ export default {
       });
     },
     removeTask(task_id) {
-      const path = "/api/jobs/" + task_id + "/remove";
-      axios.get(path).then(res => {
-        this.getTaskStatus();
-      });
+      this.$dialog
+        .confirm("Please confirm to continue")
+        .then(
+          function(dialog) {
+            const path = "/api/jobs/" + task_id + "/remove";
+            axios.get(path).then(res => {
+              this.getTaskStatus();
+            });
+          }.bind(this)
+        )
+        .catch(function() {});
     }
   },
   created() {

@@ -1,20 +1,27 @@
 <template>
-  <div class="container">
+  <div class="project" id="app">
+    <vue-headful title="Users | MorphoCut"/>
+    <div style="margin-top: 1rem; margin-bottom: 1rem;">
+      <h2 id="project-title" class="project-title">
+        <b-badge>Users</b-badge>
+      </h2>
+      <div class="project-divider"></div>
+    </div>
+
+    <p>Here you can see all of your projects. Click on the project name to access the project.</p>
+
+    <b-button type="button" class="btn btn-success project-button" v-b-modal.user-modal>
+      <font-awesome-icon icon="plus"></font-awesome-icon>&nbsp;Add User
+    </b-button>
+
     <div class="row">
-      <div class="col-sm-10">
-        <h1>Users</h1>
-        <hr>
-        <br>
-        <br>
-        <button type="button" class="btn btn-success btn-sm" v-b-modal.user-modal>Add User</button>
-        <br>
-        <br>
-        <table class="table table-hover">
-          <thead>
+      <div class="col-6" style="margin: auto;">
+        <table class="table table-hover table-sm">
+          <thead class="thead-light">
             <tr>
               <th scope="col">ID</th>
               <th scope="col">Email</th>
-              <th></th>
+              <th scope="col">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -27,7 +34,9 @@
                   class="btn btn-danger btn-sm"
                   style="margin-left: 0.5rem;"
                   v-on:click="removeUser(user.id)"
-                >Delete</button>
+                >
+                  <font-awesome-icon icon="trash"/>&nbsp;Delete
+                </button>
               </td>
             </tr>
           </tbody>
@@ -108,10 +117,17 @@ export default {
         });
     },
     removeUser(user_id) {
-      const path = "/api/users/" + user_id + "/remove";
-      axios.get(path).then(res => {
-        this.getUsers();
-      });
+      this.$dialog
+        .confirm("Please confirm to continue")
+        .then(
+          function(dialog) {
+            const path = "/api/users/" + user_id + "/remove";
+            axios.get(path).then(res => {
+              this.getUsers();
+            });
+          }.bind(this)
+        )
+        .catch(function() {});
     },
     initForm() {
       this.addUserForm.email = "";

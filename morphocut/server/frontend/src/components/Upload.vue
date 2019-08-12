@@ -2,24 +2,15 @@
   <div class="example-full">
     <!-- Drop Modal that shows up, when hovering above the page with files -->
     <div v-show="$refs.upload && $refs.upload.dropActive" class="drop-active">
-      <h3>Drop files to upload</h3>
+      <h3>
+        <font-awesome-icon icon="arrow-down"></font-awesome-icon>&nbsp;Drop files to upload
+      </h3>
     </div>
     <div class="upload" v-show="!isOption">
-      <!-- <div>
-        <table class="table table-hover table-sm">
-          <thead>
-            <tr>
-              <th>Thumb</th>
-              <th>Name</th>
-              <th>Progress</th>
-              <th>Size</th>
-              <th>Speed</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-        </table>
-      </div>-->
+      <h4>
+        <strong>Drop files onto this page and click on Start Upload!</strong>
+      </h4>
+
       <div class="table-responsive" style="height: 60vh;">
         <table class="table table-hover table-sm">
           <thead class="thead-light">
@@ -34,19 +25,7 @@
             </tr>
           </thead>
           <tbody>
-            <!-- <tr v-if="!files.length">
-              <td colspan="8">
-                <div class="text-center p-5">
-                  <h4>
-                    Drop files anywhere to upload
-                    <br>or
-                  </h4>
-                  <label :for="name" class="btn btn-lg btn-primary">Select Files</label>
-                </div>
-              </td>
-            </tr>-->
-
-            <tr v-for="(file, _) in files" :key="file.id">
+            <tr v-for="(file, index) in files" :key="file.id">
               <!-- <td>{{index}}</td> -->
               <td>
                 <img v-if="file.thumb" :src="file.thumb" width="40" height="auto" />
@@ -69,7 +48,7 @@
               <!-- <td>{{file.speed}}</td> -->
               <td>{{file.speed | formatFileSize}}</td>
 
-              <td v-if="file.error">{{file.error}}</td>
+              <td v-if="file.error">{{showFileError(file.error)}}</td>
               <td v-else-if="file.success">success</td>
               <td v-else-if="file.active">active</td>
               <td v-else></td>
@@ -122,11 +101,13 @@
               <td>
                 <div>
                   <button
-                    class="btn btn-secondary btn-sm"
-                    href="#"
-                    disabled="True"
-                    @click.prevent="$refs.upload.update(file, {active: true, error: '', progress: '0.00'})"
-                  >Retry upload</button>
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    style="margin-left: 0.5rem;"
+                    v-on:click="removeFile(file.object_id)"
+                  >
+                    <font-awesome-icon icon="trash"/>&nbsp;Delete
+                  </button>
                 </div>
               </td>
             </tr>
@@ -135,7 +116,7 @@
         <div>
           <p
             v-if="!project_files.length && !files.length"
-          >This project does not contain any files yet.</p>Drop files here!
+          >This project does not contain any files yet.</p>
         </div>
       </div>
       <div class="example-foorer">
@@ -165,7 +146,7 @@
           </file-upload>
           <div class="dropdown-menu">
             <label class="dropdown-item" :for="name">Add files</label>
-            <a class="dropdown-item" href="#" @click="onAddFolader">Add folder</a>
+            <a class="dropdown-item" href="#" @click="onAddFolder">Add folder</a>
             <a class="dropdown-item" href="#" @click.prevent="addData.show = true">Add data</a>
           </div>
         </div>
@@ -175,8 +156,7 @@
           v-if="!$refs.upload || !$refs.upload.active"
           @click.prevent="$refs.upload.active = true"
         >
-          <i class="fa fa-arrow-up" aria-hidden="true"></i>
-          Start Upload
+          <font-awesome-icon icon="upload"/>&nbsp;Start Upload
         </button>
         <button
           type="button"
@@ -184,7 +164,7 @@
           v-else
           @click.prevent="$refs.upload.active = false"
         >
-          <i class="fa fa-stop" aria-hidden="true"></i>
+          <font-awesome-icon icon="stop"/>&nbsp;
           Stop Upload
         </button>
 
@@ -207,130 +187,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div class="option" v-show="isOption">
-      <div class="form-group">
-        <label for="accept">Accept:</label>
-        <input type="text" id="accept" class="form-control" v-model="accept" />
-        <small class="form-text text-muted">Allow upload mime type</small>
-      </div>
-      <div class="form-group">
-        <label for="extensions">Extensions:</label>
-        <input type="text" id="extensions" class="form-control" v-model="extensions" />
-        <small class="form-text text-muted">Allow upload file extension</small>
-      </div>
-      <div class="form-group">
-        <label>PUT Upload:</label>
-        <div class="form-check">
-          <label class="form-check-label">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="put-action"
-              id="put-action"
-              value
-              v-model="putAction"
-            /> Off
-          </label>
-        </div>
-        <div class="form-check">
-          <label class="form-check-label">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="put-action"
-              id="put-action"
-              value="/upload/put"
-              v-model="putAction"
-            /> On
-          </label>
-        </div>
-        <small class="form-text text-muted">After the shutdown, use the POST method to upload</small>
-      </div>
-      <div class="form-group">
-        <label for="thread">Thread:</label>
-        <input
-          type="number"
-          max="5"
-          min="1"
-          id="thread"
-          class="form-control"
-          v-model.number="thread"
-        />
-        <small
-          class="form-text text-muted"
-        >Also upload the number of files at the same time (number of threads)</small>
-      </div>
-      <div class="form-group">
-        <label for="size">Max size:</label>
-        <input type="number" min="0" id="size" class="form-control" v-model.number="size" />
-      </div>
-      <div class="form-group">
-        <label for="minSize">Min size:</label>
-        <input type="number" min="0" id="minSize" class="form-control" v-model.number="minSize" />
-      </div>
-      <div class="form-group">
-        <label for="autoCompress">Automatically compress:</label>
-        <input
-          type="number"
-          min="0"
-          id="autoCompress"
-          class="form-control"
-          v-model.number="autoCompress"
-        />
-        <small
-          class="form-text text-muted"
-          v-if="autoCompress > 0"
-        >More than {{autoCompress}} files are automatically compressed</small>
-        <small class="form-text text-muted" v-else>Set up automatic compression</small>
-      </div>
-
-      <div class="form-group">
-        <div class="form-check">
-          <label class="form-check-label">
-            <input type="checkbox" id="add-index" class="form-check-input" v-model="addIndex" /> Start position to add
-          </label>
-        </div>
-        <small class="form-text text-muted">Add a file list to start the location to add</small>
-      </div>
-
-      <div class="form-group">
-        <div class="form-check">
-          <label class="form-check-label">
-            <input type="checkbox" id="drop" class="form-check-input" v-model="drop" /> Drop
-          </label>
-        </div>
-        <small class="form-text text-muted">Drag and drop upload</small>
-      </div>
-      <div class="form-group">
-        <div class="form-check">
-          <label class="form-check-label">
-            <input
-              type="checkbox"
-              id="drop-directory"
-              class="form-check-input"
-              v-model="dropDirectory"
-            /> Drop directory
-          </label>
-        </div>
-        <small class="form-text text-muted">Not checked, filter the dragged folder</small>
-      </div>
-      <div class="form-group">
-        <div class="form-check">
-          <label class="form-check-label">
-            <input type="checkbox" id="upload-auto" class="form-check-input" v-model="uploadAuto" /> Auto start
-          </label>
-        </div>
-        <small class="form-text text-muted">Automatically activate upload</small>
-      </div>
-      <div class="form-group">
-        <button
-          type="button"
-          class="btn btn-primary btn-lg btn-block"
-          @click.prevent="isOption = !isOption"
-        >Confirm</button>
       </div>
     </div>
 
@@ -495,17 +351,6 @@
         </div>
       </div>
     </div>
-    <div v-viewer="options" class="images clearfix">
-      <template v-for="{source, thumbnail} in images">
-        <img
-          :src="thumbnail"
-          :data-source="source"
-          class="image"
-          :key="source"
-          :alt="source.split('?image=').pop()"
-        />
-      </template>
-    </div>
   </div>
 </template>
 <style>
@@ -615,6 +460,10 @@ export default {
       project: null,
       files: [],
       project_files: [],
+      accept: "image/png,image/gif,image/jpeg,image/webp",
+      extensions: "gif,jpg,jpeg,png,webp",
+      minSize: 10,
+      size: 1024 * 1024 * 10,
       multiple: true,
       directory: false,
       drop: true,
@@ -680,6 +529,7 @@ export default {
     "editFile.show"(newValue, oldValue) {
       // 关闭了 自动删除 error
       if (!newValue && oldValue) {
+        console.log("EditFile Error: ", this.editFile.error);
         this.$refs.upload.update(this.editFile.id, {
           error: this.editFile.error || ""
         });
@@ -711,6 +561,26 @@ export default {
   },
 
   methods: {
+    showFileError(error) {
+      switch (error) {
+        case "size":
+          return "The file is too small";
+        case "extension":
+          return "The file has an invalid extension";
+        case "timeout":
+          return "Timeout during transmission";
+        case "abort":
+          return "The transmission has been aborted";
+        case "network":
+          return "Network error";
+        case "server":
+          return "Server error";
+        case "denied":
+          return "The file was denied by the server";
+        default:
+          return "Unknown Error";
+      }
+    },
     show() {
       const viewer = this.$el.querySelector(".images").$viewer;
       viewer.show();
@@ -744,16 +614,13 @@ export default {
     inputFilter(newFile, oldFile, prevent) {
       if (newFile && !oldFile) {
         // Before adding a file
-        // 添加文件前
 
         // Filter system files or hide files
-        // 过滤系统文件 和隐藏文件
         if (/(\/|^)(Thumbs\.db|desktop\.ini|\..+)$/.test(newFile.name)) {
           return prevent();
         }
 
         // Filter php html js file
-        // 过滤 php html js 文件
         if (/\.(php5?|html?|jsx?)$/i.test(newFile.name)) {
           return prevent();
         }
@@ -761,7 +628,6 @@ export default {
 
       if (newFile && (!oldFile || newFile.file !== oldFile.file)) {
         // Create a blob field
-        // 创建 blob 字段
         newFile.blob = "";
         let URL = window.URL || window.webkitURL;
         if (URL && URL.createObjectURL) {
@@ -769,7 +635,6 @@ export default {
         }
 
         // Thumbnails
-        // 缩略图
         newFile.thumb = "";
         if (newFile.blob && newFile.type.substr(0, 6) === "image/") {
           newFile.thumb = newFile.blob;
@@ -880,7 +745,7 @@ export default {
     },
 
     // add folader
-    onAddFolader() {
+    onAddFolder() {
       if (!this.$refs.upload.features.directory) {
         this.alert("Your browser does not support");
         return;
@@ -912,6 +777,20 @@ export default {
       });
 
       this.$refs.upload.add(file);
+    },
+
+    removeFile(object_id) {
+      this.$dialog
+        .confirm("Please confirm to continue")
+        .then(
+          function(dialog) {
+            const path = "/api/objects/" + object_id + "/remove";
+            axios.get(path).then(res => {
+              this.getProjectFiles();
+            });
+          }.bind(this)
+        )
+        .catch(function() {});
     }
   },
   filters: {

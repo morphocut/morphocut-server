@@ -258,14 +258,10 @@ def process_project_route(id):
         with database.engine.begin() as connection:
             app = flask.current_app
             params = request.get_json()['params']
-            print('params')
-            print(str(params))
-            if current_user.get_task_in_progress('process_project'):
-                print('A process task is currently in progress')
-            else:
-                task = current_user.launch_task('morphocut.server.api.process_project',
-                                                'Processing project...', id, id, params)
-                response_object['job_id'] = task.id
+            task = current_user.launch_task('morphocut.server.api.process_project',
+                                            'Processing project...', id, id, params)
+            response_object['job_id'] = task.id
+    print("return process")
     return jsonify(response_object), 202
 
 
@@ -299,7 +295,7 @@ def get_project_job_status(id):
         }
     else:
         response_object = {'status': 'error'}
-    print(jsonify(response_object))
+    # print(jsonify(response_object))
     return jsonify(response_object)
 
 
@@ -433,11 +429,51 @@ def remove_task(task_id):
 
     task = models.Task.query.filter(models.Task.id == task_id).first()
     print('removing task with id {}'.format(task.id))
-    if task.complete and 'morphocut' in task.result and app.config['DATA_DIRECTORY'] in task.result:
-        helpers.remove_file(task.result)
+    app = flask.current_app
+    absolute_path = os.path.join(
+        app.root_path, app.config['DATA_DIRECTORY'], task.result)
+    helpers.remove_file(absolute_path)
 
     database.session.delete(task)
     database.session.commit()
+
+    return jsonify(response_object)
+
+
+# ===============================================================================
+# Objects Routes
+# ===============================================================================
+
+
+@api.route("/objects/<object_id>/remove", methods=['GET'])
+@login_required
+def remove_object(object_id):
+    response_object = {'status': 'success'}
+    with database.engine.begin() as connection:
+
+        stmt = select([models.objects.c.object_id, models.objects.c.filename, models.objects.c.project_id]).where(
+            models.objects.c.object_id == object_id)
+        obj = connection.execute(stmt).first()
+
+        if obj:
+            stmt = select([models.projects.c.path]).where(
+                models.projects.c.project_id == obj['project_id'])
+            project = connection.execute(stmt).first()
+
+            if project:
+                app = flask.current_app
+                obj_path = os.path.join(
+                    app.root_path, app.config['DATA_DIRECTORY'], project['path'], obj['filename'])
+                if 'morphocut' in obj_path and app.config['DATA_DIRECTORY'] in obj_path:
+                    print('removing object with id {}'.format(
+                        obj['object_id']))
+                    if os.path.exists(obj_path):
+                        helpers.remove_file(obj_path)
+
+                    stmt = models.objects.delete().where(
+                        models.objects.c.object_id == obj['object_id']
+                    )
+                    connection.execute(stmt)
 
     return jsonify(response_object)
 
@@ -483,16 +519,20 @@ def get_running_task_dicts(tasks):
     running_task_dicts = []
     with database.engine.begin() as connection:
         for task in tasks:
+            print(json.loads(task.meta))
             job = Job.fetch(task.id, connection=redis_conn)
             project = connection.execute(select([sqlalchemy.text(
                 '*')]).select_from(models.projects).where(models.projects.c.project_id == task.project_id)).first()
             task_dict = dict(id=task.id, name=task.name, description=task.description,
                              complete=task.complete, result=task.result, progress=task.get_progress(), project_id=task.project_id)
+            task_dict['meta'] = json.loads(
+                task.meta) if task.meta is not None else {}
+
             if job:
                 task_dict['status'] = job.get_status()
-                if job.started_at:
-                    task_dict['started_at'] = job.started_at.strftime(
-                        '%Y-%m-%d %H:%M:%S')
+                # task_dict['started_at'] = datetime.datetime.fromtimestamp(
+                #     task_dict['meta']['scheduled_at'])
+                # print('scheduled_at: {}'.format(task_dict['started_at']))
             if project:
                 task_dict['project_name'] = project['name']
             running_task_dicts.append(task_dict)
@@ -520,13 +560,16 @@ def get_finished_task_dicts(tasks):
                 download_path = url_for('data', path=task.result)
                 task_dict = dict(id=task.id, name=task.name, description=task.description,
                                  complete=task.complete, result=task.result, download_path=download_path, status='finished', project_id=task.project_id)
+                task_dict['meta'] = json.loads(
+                    task.meta) if task.meta is not None else {}
                 finished_task_dicts.append(task_dict)
+                project = connection.execute(select([sqlalchemy.text(
+                    '*')]).select_from(models.projects).where(models.projects.c.project_id == task.project_id)).first()
+                if project:
+                    task_dict['project_name'] = project['name']
             except Exception as err:
+                print('exception in api.get_finished_task_dicts')
                 print(err)
-            project = connection.execute(select([sqlalchemy.text(
-                '*')]).select_from(models.projects).where(models.projects.c.project_id == task.project_id)).first()
-            if project:
-                task_dict['project_name'] = project['name']
     return finished_task_dicts
 
 
@@ -589,7 +632,7 @@ def process_and_zip(import_path, export_path, params):
         os.makedirs(export_dirpath)
 
     if params:
-        print('get pipeline with params {}'.format(params))
+        # print('get pipeline with params {}'.format(params))
         pipeline = get_default_pipeline_parameterized(
             import_path, export_path, params)
     else:

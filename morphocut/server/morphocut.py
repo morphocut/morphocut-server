@@ -196,6 +196,16 @@ def index():
     return redirect(url_for("frontend.index"))
 
 
+@app.route("/imprint")
+def imprint():
+    """Redirects index requests to the frontend index page.
+
+    """
+    print('index request')
+
+    return redirect(url_for("frontend.imprint"))
+
+
 @app.route("/login")
 @login_required
 def login():
@@ -204,7 +214,7 @@ def login():
     """
     print('login request')
 
-    return redirect(url_for("frontend.index"))
+    return redirect(url_for("frontend.routes"))
 
 
 @app.route("/logout")
