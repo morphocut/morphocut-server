@@ -1,8 +1,8 @@
-from morphocut.server import api
-from morphocut.server import morphocut
-from morphocut.server.extensions import database, migrate
-from morphocut.server import models
-from morphocut.processing.pipeline import *
+from morphocut_server import api
+from morphocut_server import morphocut
+from morphocut_server.extensions import database, migrate
+from morphocut_server import models
+from morphocut.pipeline import *
 
 import os
 import tempfile
@@ -72,7 +72,7 @@ def test_processor():
 
 #     app = Flask(__name__)
 
-#     app.config.from_object('morphocut.server.config_default')
+#     app.config.from_object('morphocut_server.config_default')
 
 #     if 'morphocut_SETTINGS' in os.environ:
 #         app.config.from_envvar('morphocut_SETTINGS')

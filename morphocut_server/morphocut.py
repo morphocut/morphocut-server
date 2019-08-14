@@ -33,10 +33,10 @@ from sqlalchemy.sql import select, and_, union, intersect
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-from morphocut.server import models
-from morphocut.server.extensions import database, migrate, redis_store, flask_rq
-from morphocut.server.frontend import frontend
-from morphocut.server.api import api
+from morphocut_server import models
+from morphocut_server.extensions import database, migrate, redis_store, flask_rq
+from morphocut_server.frontend import frontend
+from morphocut_server.api import api
 
 # Enable fault handler for meaningful stack traces when a worker is killed
 faulthandler.enable()
@@ -49,7 +49,7 @@ faulthandler.enable()
 
 app = Flask(__name__)
 
-app.config.from_object('morphocut.server.config_default')
+app.config.from_object('morphocut_server.config_default')
 
 if 'MORPHOCUT_SETTINGS' in os.environ:
     app.config.from_envvar('MORPHOCUT_SETTINGS')

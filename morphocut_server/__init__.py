@@ -8,16 +8,16 @@ from .morphocut import app
 #     from flask_cors import CORS
 #     from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 
-#     from morphocut.server import models
-#     from morphocut.server import morphocut as mc
-#     from morphocut.server.extensions import database, migrate, redis_store, flask_rq
-#     from morphocut.server.api import api
-#     from morphocut.server.frontend import frontend
-#     from morphocut.server.morphocut import morphocut
+#     from morphocut_server import models
+#     from morphocut_server import morphocut as mc
+#     from morphocut_server.extensions import database, migrate, redis_store, flask_rq
+#     from morphocut_server.api import api
+#     from morphocut_server.frontend import frontend
+#     from morphocut_server.morphocut import morphocut
 
 #     app = Flask(__name__)
 
-#     app.config.from_object('morphocut.server.config_default')
+#     app.config.from_object('morphocut_server.config_default')
 
 #     if 'MORPHOCUT_SETTINGS' in os.environ:
 #         app.config.from_envvar('MORPHOCUT_SETTINGS')

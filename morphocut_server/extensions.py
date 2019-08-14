@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 # from flask_rq2 import RQ
 
 from rq import Queue
-from morphocut.server.worker import redis_conn
+from morphocut_server.worker import redis_conn
 
 database = SQLAlchemy()
 redis_store = FlaskRedis()

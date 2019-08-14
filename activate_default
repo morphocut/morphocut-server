@@ -1,4 +1,4 @@
 conda activate morphocut
 
-export FLASK_APP=morphocut.server && export FLASK_DEBUG=true
+export FLASK_APP=morphocut_server && export FLASK_DEBUG=true
 #export morphocut_SETTINGS=config_XXX.py

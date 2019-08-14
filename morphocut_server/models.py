@@ -7,8 +7,8 @@ from sqlalchemy.types import Integer, BigInteger, String, DateTime, PickleType, 
 from sqlalchemy.sql.schema import UniqueConstraint, CheckConstraint
 from sqlalchemy.dialects.postgresql import ARRAY, JSON
 from sqlalchemy.sql import func
-from morphocut.server.extensions import database, redis_queue
-from morphocut.server.worker import redis_conn
+from morphocut_server.extensions import database, redis_queue
+from morphocut_server.worker import redis_conn
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 import redis
 import rq
@@ -58,6 +58,8 @@ class User(database.Model, UserMixin):
         The password of the user.
 
     """
+    # pylint: disable=no-member
+
     __tablename__ = 'users'
     id = database.Column(
         database.Integer(), primary_key=True)
@@ -97,7 +99,7 @@ class User(database.Model, UserMixin):
             The task object connected to the enqueued job.
 
         """
-        rq_job = redis_queue.enqueue('morphocut.server.tasks.execute_task_and_save_result',
+        rq_job = redis_queue.enqueue('morphocut_server.tasks.execute_task_and_save_result',
                                      name, *args, **kwargs,
                                      job_timeout=job_timeout)
         task = Task(id=rq_job.get_id(), name=name, description=description,
@@ -208,6 +210,8 @@ class Role(database.Model):
         The name of the role.
 
     """
+    # pylint: disable=no-member
+
     __tablename__ = 'roles'
     id = database.Column(database.Integer(), primary_key=True)
     name = database.Column(database.String(50), unique=True)
@@ -228,6 +232,8 @@ class UserRoles(database.Model):
         The id of the role.
 
     """
+    # pylint: disable=no-member
+
     __tablename__ = 'user_roles'
     id = database.Column(database.Integer(), primary_key=True)
     user_id = database.Column(database.Integer(), database.ForeignKey(
@@ -259,6 +265,7 @@ class Task(database.Model):
         The result of the function executed in this task.
 
     """
+    # pylint: disable=no-member
     id = database.Column(database.String(36), primary_key=True)
     name = database.Column(database.String(128), index=True)
     description = database.Column(database.String(128))

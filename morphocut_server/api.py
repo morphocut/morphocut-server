@@ -1,47 +1,44 @@
 import datetime
+import errno
 import faulthandler
 import itertools
 import json
 import os
 import pathlib
+import urllib
 import urllib.parse
 from getpass import getpass
 from time import sleep
-import urllib
-import click
-import h5py
-import pandas as pd
-from timer_cm import Timer
-from etaprogress.progress import ProgressBar
 
+import click
 import flask
 import flask_migrate
+import pandas as pd
+import sqlalchemy
 from flask import (Flask, Response, abort, jsonify, redirect, render_template,
                    request, url_for)
 from flask.blueprints import Blueprint
 from flask.helpers import send_from_directory
 from flask_cors import CORS
-from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 from flask_login import logout_user
-
-import sqlalchemy
+from flask_user import (UserManager, UserMixin, current_user, login_required,
+                        roles_required)
+from rq import Queue
+from rq.job import Job
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import and_, intersect, select, union
 from sqlalchemy.sql.expression import bindparam
-
+from timer_cm import Timer
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-from rq import Queue
-from rq.job import Job
-
-from morphocut.server.worker import redis_conn
-from morphocut.processing.pipeline import *
-from morphocut.server import models, helpers, tasks
-from morphocut.server.extensions import database, migrate, redis_store
-from morphocut.server.frontend import frontend
-
+from morphocut.pipeline import *
+from morphocut_server import helpers, models, tasks
+from morphocut_server.extensions import database, migrate, redis_store
+from morphocut_server.frontend import frontend
+from morphocut_server.worker import redis_conn
+from morphocut_server.pipeline import *
 
 api = Blueprint("api", __name__)
 
@@ -64,7 +61,7 @@ def get_current_users_route():
 
     """
     if request.method == 'POST':
-        from morphocut.server import morphocut
+        from morphocut_server import morphocut
         user = request.get_json()
         morphocut.add_user_to_database(
             user['email'], user['password'], user['admin'])
@@ -258,7 +255,7 @@ def process_project_route(id):
         with database.engine.begin() as connection:
             app = flask.current_app
             params = request.get_json()['params']
-            task = current_user.launch_task('morphocut.server.api.process_project',
+            task = current_user.launch_task('morphocut_server.api.process_project',
                                             'Processing project...', id, id, params)
             response_object['job_id'] = task.id
     print("return process")
@@ -374,9 +371,9 @@ def remove_project(project_id):
                 if os.path.exists(project_path):
                     helpers.remove_directory(project_path)
 
-                stmt = models.projects.delete().where(
-                    models.projects.c.project_id == project_id
-                )
+                stmt = models.projects.delete().where(  # pylint: disable=no-value-for-parameter
+                    models.projects.c.project_id == project_id)
+
                 connection.execute(stmt)
 
     return jsonify(response_object)
@@ -399,7 +396,7 @@ def remove_user(user_id):
     """
     response_object = {'status': 'success'}
     models.User.query.filter(models.User.id == user_id).delete()
-    database.session.commit()
+    database.session.commit()  # pylint: disable=no-member
 
     return jsonify(response_object)
 
@@ -434,8 +431,8 @@ def remove_task(task_id):
         app.root_path, app.config['DATA_DIRECTORY'], task.result)
     helpers.remove_file(absolute_path)
 
-    database.session.delete(task)
-    database.session.commit()
+    database.session.delete(task)  # pylint: disable=no-member
+    database.session.commit()  # pylint: disable=no-member
 
     return jsonify(response_object)
 
@@ -470,9 +467,10 @@ def remove_object(object_id):
                     if os.path.exists(obj_path):
                         helpers.remove_file(obj_path)
 
-                    stmt = models.objects.delete().where(
+                    stmt = models.objects.delete().where(  # pylint: disable=no-value-for-parameter
                         models.objects.c.object_id == obj['object_id']
                     )
+
                     connection.execute(stmt)
 
     return jsonify(response_object)
@@ -587,7 +585,7 @@ def process_project(project_id, params):
         The path to the exported file relative to the data directory.
 
     """
-    from morphocut.server import morphocut
+    from morphocut_server import morphocut
     with morphocut.app.app_context():
         app = flask.current_app
         with database.engine.begin() as connection:
@@ -747,8 +745,9 @@ def add_project(project):
 
     """
     print('add_project: ' + str(project))
-    try_insert_or_update(models.projects.insert(), [dict(
-        name=project['name'], path=project['name'], active=True, user_id=current_user.id)])
+    try_insert_or_update(models.projects.insert(),  # pylint: disable=no-value-for-parameter
+                         [dict(
+                             name=project['name'], path=project['name'], active=True, user_id=current_user.id)])
     return
 
 
@@ -766,8 +765,10 @@ def add_object(_object):
 
     """
     print('add_object: ' + str(_object))
-    try_insert_or_update(models.objects.insert(), [dict(
-        project_id=_object['project_id'], filename=_object['filename'])])
+    try_insert_or_update(
+        models.objects.insert(),  # pylint: disable=no-value-for-parameter
+        [dict(
+            project_id=_object['project_id'], filename=_object['filename'])])
 
 
 def try_insert_or_update(insert_function, data):
