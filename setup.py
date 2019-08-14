@@ -29,7 +29,8 @@ setup(
         'flask-user',
         'flask-login',
         'flask-sqlalchemy',
-        'flask-redis'
+        'flask-redis',
+        'psycopg2-binary',
     ],
     python_requires='>=3.5',
     extras_require={

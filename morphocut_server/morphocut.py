@@ -6,10 +6,8 @@ from time import sleep
 
 import click
 import flask_migrate
-import h5py
 import pandas as pd
 from timer_cm import Timer
-from etaprogress.progress import ProgressBar
 
 import json
 import urllib.parse
@@ -150,16 +148,16 @@ def add_user_to_database(email, password, admin):
             email=email,
             password=user_manager.hash_password(password),
         )
-        database.session.add(user)
-        database.session.commit()
+        database.session.add(user)  # pylint: disable=no-member
+        database.session.commit()  # pylint: disable=no-member
 
         if admin:
             check_admin_role()
             role = models.Role.query.filter(
                 models.Role.name == app.config['ADMIN_ROLE_NAME']).first()
             user_role = models.UserRoles(user_id=user.id, role_id=role.id)
-            database.session.add(user_role)
-            database.session.commit()
+            database.session.add(user_role)  # pylint: disable=no-member
+            database.session.commit()  # pylint: disable=no-member
 
 
 def check_admin_role():
@@ -168,8 +166,8 @@ def check_admin_role():
         admin_role = models.Role(
             name=app.config['ADMIN_ROLE_NAME']
         )
-        database.session.add(admin_role)
-        database.session.commit()
+        database.session.add(admin_role)  # pylint: disable=no-member
+        database.session.commit()  # pylint: disable=no-member
 
 # ===============================================================================
 # Blueprint Registration

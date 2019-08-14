@@ -607,7 +607,7 @@ def process_project(project_id, params):
             return os.path.join(rel_project_path, export_filename)
 
 
-def process_and_zip(import_path, export_path, params):
+def process_and_zip(import_path, export_path, params=None):
     """Executes the default pipeline with the specified import and export paths.
 
     Parameters
@@ -629,7 +629,7 @@ def process_and_zip(import_path, export_path, params):
     if not os.path.exists(export_dirpath):
         os.makedirs(export_dirpath)
 
-    if params:
+    if params is not None:
         # print('get pipeline with params {}'.format(params))
         pipeline = get_default_pipeline_parameterized(
             import_path, export_path, params)
