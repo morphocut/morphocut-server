@@ -37,3 +37,7 @@ from .morphocut import app
 #     # app.cli.add_command(mc.reset_db)
 
 #     return app
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions

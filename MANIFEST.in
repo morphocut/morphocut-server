@@ -1,0 +1,2 @@
+include versioneer.py
+include morphocut_server/_version.py
