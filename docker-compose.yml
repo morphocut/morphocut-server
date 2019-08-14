@@ -3,8 +3,15 @@ services:
   web:
     build: .
     ports:
-      - "5000:5000"
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
   redis:
     image: "redis:alpine"
   postgres:
     image: "postgres:10-alpine"
+    environment:
+      POSTGRES_USER: morphocut
+      POSTGRES_PASSWORD: morphocut
+      POSTGRES_DB: morphocut
