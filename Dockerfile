@@ -24,7 +24,7 @@ RUN apt-get update --fix-missing && \
 
 COPY . .
 
-RUN pip install git+https://github.com/morphocut/morphocut/ && \
+RUN pip install git+https://github.com/morphocut/morphocut.git@0.0.1 && \
     pip install -e .
 
 COPY --from=build_frontend /frontend/dist morphocut_server/frontend/dist
