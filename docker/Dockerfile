@@ -16,14 +16,14 @@ RUN apt-get update --fix-missing && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+COPY docker/run.sh docker/wait-for environment.yml docker/activate ./
+
+# Install conda env
 RUN conda config --set notify_outdated_conda false && \
-    conda create -yn morphocut python=3.7 numpy && \
+    conda env create -f environment.yml && \
     conda clean -y --all
 
-# Install prerequisites
-RUN . /opt/conda/etc/profile.d/conda.sh && \
-    conda activate morphocut && \
-    pip install git+https://github.com/morphocut/morphocut/ gunicorn
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Install the application
 COPY versioneer.py setup.py setup.cfg MANIFEST.in README.md ./
@@ -35,8 +35,6 @@ RUN . /opt/conda/etc/profile.d/conda.sh && \
     pip install -e .
 
 COPY --from=build_frontend /frontend/dist morphocut_server/frontend/dist
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-COPY config_docker.py morphocut_server/
-COPY run.sh wait-for ./
+COPY docker/config_docker.py morphocut_server/
 CMD ["/code/run.sh"]

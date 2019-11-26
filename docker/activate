@@ -1,0 +1,5 @@
+. /opt/conda/etc/profile.d/conda.sh
+conda activate morphocut
+
+export FLASK_APP=morphocut_server
+export MORPHOCUT_SETTINGS=config_docker.py

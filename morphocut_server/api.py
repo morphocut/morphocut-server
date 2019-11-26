@@ -33,7 +33,7 @@ from timer_cm import Timer
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-from morphocut.pipeline import *
+#from morphocut.pipeline import *
 from morphocut_server import helpers, models, tasks
 from morphocut_server.extensions import database, migrate, redis_store
 from morphocut_server.frontend import frontend

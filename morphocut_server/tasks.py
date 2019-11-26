@@ -3,7 +3,7 @@ import datetime
 import importlib
 from rq import get_current_job
 
-from morphocut.pipeline import *
+#from morphocut.pipeline import *
 from morphocut_server import models, helpers
 # from morphocut_server import create_app
 from morphocut_server.extensions import database, migrate, redis_store, redis_queue
