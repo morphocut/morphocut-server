@@ -21,6 +21,7 @@ from flask.helpers import send_from_directory
 from flask.blueprints import Blueprint
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
 from flask_login import logout_user, LoginManager
+from flask_jwt_extended import create_access_token
 
 import sqlalchemy
 from sqlalchemy import func
@@ -204,15 +205,17 @@ def imprint():
     return redirect(url_for("frontend.imprint"))
 
 
-@app.route("/login")
-@login_required
+@app.route('/api/login', methods=['POST'])
 def login():
-    """Redirects index requests to the frontend index page.
+    email = request.json.get('email', None)
+    password = request.json.get('password', None)
 
-    """
-    print('login request')
-
-    return redirect(url_for("frontend.routes"))
+    user = models.User.query.filter_by(email=email).first()
+    if user and user_manager.verify_password(password, user.password):
+        access_token = create_access_token(identity=email)
+        return jsonify(access_token=access_token)
+    else:
+        return jsonify({"error": "Invalid email or password"}), 401
 
 
 @app.route("/logout")

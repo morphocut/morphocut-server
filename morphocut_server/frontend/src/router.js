@@ -5,6 +5,7 @@ import Upload from '@/components/Upload';
 import Tasks from '@/components/Tasks';
 import Project from '@/components/Project';
 import Projects from '@/components/Projects';
+import Login from '@/components/Login.vue';
 import Accounts from '@/components/Accounts';
 import Landing from '@/components/Landing';
 import Imprint from '@/components/Imprint';
@@ -69,6 +70,11 @@ export default new Router({
       path: '/imprint',
       name: 'Imprint',
       component: Imprint,
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: Login
     },
   ]
 })
