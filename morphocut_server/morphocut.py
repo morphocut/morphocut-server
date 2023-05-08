@@ -14,14 +14,13 @@ import urllib.parse
 import datetime
 
 from flask import (Flask, Response, abort, redirect, render_template, request,
-                   url_for, current_app)
+                   url_for, current_app, make_response)
 from flask_cors import CORS
 from flask import jsonify
 from flask.helpers import send_from_directory
 from flask.blueprints import Blueprint
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
-from flask_login import logout_user, LoginManager
-from flask_jwt_extended import create_access_token
+from flask_login import logout_user, LoginManager, login_user
 
 import sqlalchemy
 from sqlalchemy import func
@@ -151,6 +150,8 @@ def add_user_to_database(email, password, admin):
         )
         database.session.add(user)  # pylint: disable=no-member
         database.session.commit()  # pylint: disable=no-member
+        app.logger.info(f"User with email {email} added successfully.")
+        app.logger.info(user)
 
         if admin:
             check_admin_role()
@@ -159,6 +160,7 @@ def add_user_to_database(email, password, admin):
             user_role = models.UserRoles(user_id=user.id, role_id=role.id)
             database.session.add(user_role)  # pylint: disable=no-member
             database.session.commit()  # pylint: disable=no-member
+            app.logger.info(f"User with email {email} granted admin role.")
 
 
 def check_admin_role():
@@ -207,15 +209,19 @@ def imprint():
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    email = request.json.get('email', None)
-    password = request.json.get('password', None)
+    data = request.get_json()
+    user = models.User.query.filter_by(email=data['email']).first()
 
-    user = models.User.query.filter_by(email=email).first()
-    if user and user_manager.verify_password(password, user.password):
-        access_token = create_access_token(identity=email)
-        return jsonify(access_token=access_token)
+    if user and user_manager.verify_password(data['password'], user):
+        login_user(user)
+
+        # Create a response with the access token as a cookie
+        response = make_response(jsonify({'status': 'success', 'message': 'Logged in successfully'}))
+        response.headers['X-User-Id'] = user.id
+
+        return response
     else:
-        return jsonify({"error": "Invalid email or password"}), 401
+        return jsonify({'status': 'error', 'message': 'Invalid email or password'})
 
 
 @app.route("/logout")

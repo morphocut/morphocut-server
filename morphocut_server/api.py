@@ -20,7 +20,7 @@ from flask import (Flask, Response, abort, jsonify, redirect, render_template,
 from flask.blueprints import Blueprint
 from flask.helpers import send_from_directory
 from flask_cors import CORS
-from flask_login import logout_user
+from flask_login import logout_user, login_user
 from flask_user import (UserManager, UserMixin, current_user, login_required,
                         roles_required)
 from rq import Queue
@@ -39,6 +39,7 @@ from morphocut_server.extensions import database, migrate, redis_store
 from morphocut_server.frontend import frontend
 from morphocut_server.worker import redis_conn
 from morphocut_server.pipeline import *
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 api = Blueprint("api", __name__)
 
@@ -49,14 +50,14 @@ api = Blueprint("api", __name__)
 
 
 @api.route("/users", methods=['GET', 'POST'])
-@login_required
-@roles_required('admin')
+# @login_required
+# @roles_required('admin')
 def get_current_users_route():
     """Get the users currently registered.
 
     Returns
     -------
-    repsonse : str
+    response : str
         The jsonified response object.
 
     """
@@ -65,6 +66,9 @@ def get_current_users_route():
         user = request.get_json()
         morphocut.add_user_to_database(
             user['email'], user['password'], user['admin'])
+
+        response_object = {'status': 'success', 'message': 'User added successfully'}
+        return jsonify(response_object)
     else:
         response_object = {'status': 'success'}
         users = models.User.query.all()
@@ -80,8 +84,7 @@ def get_current_users_route():
             'users': user_list
         }
 
-    return jsonify(response_object)
-
+        return jsonify(response_object)
 
 @api.route("/users/current", methods=['GET'])
 def get_current_user_route():
@@ -171,8 +174,8 @@ def get_user_jobs_route(id):
 # Projects Routes
 # ===============================================================================
 
-
 @api.route('/projects', methods=['GET', 'POST'])
+@login_required
 def get_projects_route():
     """Get the projects from the database.
 
@@ -190,6 +193,10 @@ def get_projects_route():
             response_object['message'] = 'Project added!'
     else:
         response_object['projects'] = get_projects()
+
+    if not current_user.is_authenticated:
+        return jsonify({'status': 'error', 'message': 'User not authenticated'}), 401
+
     return jsonify(response_object)
 
 
@@ -358,14 +365,14 @@ def remove_project(project_id):
     response_object = {'status': 'success'}
     with database.engine.begin() as connection:
 
-        stmt = select([models.projects.c.path]).where(
+        stmt = select(models.projects.c.path).where(
             models.projects.c.project_id == project_id)
         project = connection.execute(stmt).first()
 
         if project:
             app = flask.current_app
             project_path = os.path.join(
-                app.root_path, app.config['DATA_DIRECTORY'], project['path'])
+                app.root_path, app.config['DATA_DIRECTORY'], project._asdict()['path'])
             if 'morphocut' in project_path and app.config['DATA_DIRECTORY'] in project_path:
                 print('removing project with id {}'.format(project_id))
                 if os.path.exists(project_path):
@@ -519,8 +526,8 @@ def get_running_task_dicts(tasks):
         for task in tasks:
             print(json.loads(task.meta))
             job = Job.fetch(task.id, connection=redis_conn)
-            project = connection.execute(select([sqlalchemy.text(
-                '*')]).select_from(models.projects).where(models.projects.c.project_id == task.project_id)).first()
+            project = connection.execute(select(sqlalchemy.text(
+                '*')).select_from(models.projects).where(models.projects.c.project_id == task.project_id)).first()
             task_dict = dict(id=task.id, name=task.name, description=task.description,
                              complete=task.complete, result=task.result, progress=task.get_progress(), project_id=task.project_id)
             task_dict['meta'] = json.loads(
@@ -532,7 +539,7 @@ def get_running_task_dicts(tasks):
                 #     task_dict['meta']['scheduled_at'])
                 # print('scheduled_at: {}'.format(task_dict['started_at']))
             if project:
-                task_dict['project_name'] = project['name']
+                task_dict['project_name'] = project[1]
             running_task_dicts.append(task_dict)
     return running_task_dicts
 
@@ -561,10 +568,10 @@ def get_finished_task_dicts(tasks):
                 task_dict['meta'] = json.loads(
                     task.meta) if task.meta is not None else {}
                 finished_task_dicts.append(task_dict)
-                project = connection.execute(select([sqlalchemy.text(
-                    '*')]).select_from(models.projects).where(models.projects.c.project_id == task.project_id)).first()
+                project = connection.execute(select(sqlalchemy.text(
+                    '*')).select_from(models.projects).where(models.projects.c.project_id == task.project_id)).first()
                 if project:
-                    task_dict['project_name'] = project['name']
+                    task_dict['project_name'] = project[1]
             except Exception as err:
                 print('exception in api.get_finished_task_dicts')
                 print(err)
@@ -590,12 +597,12 @@ def process_project(project_id, params):
         app = flask.current_app
         with database.engine.begin() as connection:
             result = connection.execute(select(
-                [models.projects.c.path])
+                models.projects.c.path)
                 .select_from(models.projects)
                 .where(models.projects.c.project_id == project_id))
             r = result.fetchone()
             if (r is not None):
-                rel_project_path = r['path']
+                rel_project_path = r._asdict()['path']
                 abs_project_path = os.path.join(
                     app.root_path, app.config['DATA_DIRECTORY'], rel_project_path)
                 export_filename = 'ecotaxa_segmentation_{:%Y_%m_%d}_{}.zip'.format(
@@ -641,6 +648,7 @@ def process_and_zip(import_path, export_path, params=None):
     return export_path
 
 
+@login_required
 def get_projects():
     """Get the projects belonging to the current user.
 
@@ -650,16 +658,28 @@ def get_projects():
         The projects belonging to the current user.
 
     """
+    print("Access token received")
+    print("get_projects called, current_user ID:", current_user.get_id())  # Add this line
+
     if current_user.get_id() is None:
         return
     with database.engine.begin() as connection:
-        result = connection.execute(select(
-            [models.projects.c.project_id, models.projects.c.name, models.projects.c.path, models.projects.c.creation_date, models.projects.c.user_id, func.count(models.objects.c.object_id).label('object_count')])
+        result = connection.execute(
+            select(
+                models.projects.c.project_id,
+                models.projects.c.name,
+                models.projects.c.path,
+                models.projects.c.creation_date,
+                models.projects.c.user_id,
+                func.count(models.objects.c.object_id).label('object_count')
+            )
             .select_from(models.projects.outerjoin(models.objects))
             .where(and_(models.projects.c.active == True, models.projects.c.user_id == current_user.id))
             .group_by(models.projects.c.project_id)
-            .order_by(models.projects.c.project_id))
-        projects = [dict(row) for row in result]
+            .order_by(models.projects.c.project_id)
+        )
+        projects = [row._asdict() for row in result]
+        print("Fetched projects:", projects)  # Add this line
         for project in projects:
             user = models.User.query.filter_by(
                 id=project['user_id']).first()
@@ -684,26 +704,28 @@ def get_project_files(id):
     """
     with database.engine.begin() as connection:
         result = connection.execute(select(
-            [models.objects.c.filename, models.objects.c.object_id, models.objects.c.modification_date, models.objects.c.creation_date])
+            models.objects.c.filename, models.objects.c.object_id, models.objects.c.modification_date, models.objects.c.creation_date)
             .select_from(models.objects)
             .where(models.objects.c.project_id == id))
+        print(f'Query result for project_id {id}: {result}')
         project = connection.execute(select(
-            [models.projects.c.path])
+            models.projects.c.path)
             .select_from(models.projects)
             .where(models.projects.c.project_id == id))
         r = project.fetchone()
         project = ''
         if (r is not None):
-            project_path = r['path']
-        return [dict(filename=row['filename'],
-                     object_id=row['object_id'],
-                     modification_date=row['modification_date'],
-                     creation_date=row['creation_date'],
+            project_path = r._asdict()['path']
+        objects = [dict(filename=row._asdict()['filename'],
+                     object_id=row._asdict()['object_id'],
+                     modification_date=row._asdict()['modification_date'],
+                     creation_date=row._asdict()['creation_date'],
                      filepath=url_for(
-                         'data', path=os.path.join(project_path, row['filename']))
-                     )
-
-                for row in result]
+                         'data', path=os.path.join(project_path, row._asdict()['filename']))
+                    )
+                    for row in result]
+        print(f'Objects for project_id {id}: {objects}')
+        return objects
 
 
 def get_project(id):
@@ -722,12 +744,12 @@ def get_project(id):
     """
     with database.engine.begin() as connection:
         result = connection.execute(select(
-            [sqlalchemy.text('*')])
+            sqlalchemy.text('*'))
             .select_from(models.projects)
             .where(models.projects.c.project_id == id))
         row = result.fetchone()
         if (row is not None):
-            return dict(row)
+            return row._asdict()
         return
 
 
@@ -748,7 +770,6 @@ def add_project(project):
     try_insert_or_update(models.projects.insert(),  # pylint: disable=no-value-for-parameter
                          [dict(
                              name=project['name'], path=project['name'], active=True, user_id=current_user.id)])
-    return
 
 
 def add_object(_object):
@@ -769,6 +790,7 @@ def add_object(_object):
         models.objects.insert(),  # pylint: disable=no-value-for-parameter
         [dict(
             project_id=_object['project_id'], filename=_object['filename'])])
+    print(f'Object added: {_object}')
 
 
 def try_insert_or_update(insert_function, data):

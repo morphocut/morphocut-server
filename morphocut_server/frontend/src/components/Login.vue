@@ -33,6 +33,14 @@
 <script>
 import axios from 'axios';
 
+axios.interceptors.request.use((config) => {
+  const user_id = localStorage.getItem('user_id');
+  if (user_id) {
+    config.headers['X-User-Id'] = user_id;
+  }
+  return config;
+});
+
 export default {
   data() {
     return {
@@ -52,8 +60,8 @@ export default {
         });
 
         if (response.data && response.data.access_token) {
-          localStorage.setItem('access_token', response.data.access_token);
-          this.$router.push('/users');
+          localStorage.setItem('user_id', response.data.user_id);
+          this.$router.push('/projects');
         } else {
           this.errorMessage = "Incorrect email or password.";
         }
