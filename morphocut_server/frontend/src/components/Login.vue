@@ -59,10 +59,10 @@ export default {
           password: this.loginForm.password,
         });
 
-        if (response.data && response.data.access_token) {
+      if (response.data && response.data.user_id) {
           localStorage.setItem('user_id', response.data.user_id);
           this.$router.push('/projects');
-        } else {
+      } else {
           this.errorMessage = "Incorrect email or password.";
         }
       } catch (error) {

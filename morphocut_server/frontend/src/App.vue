@@ -31,7 +31,7 @@
             <b-dropdown-item href="/user/change-password">
               <font-awesome-icon icon="key"></font-awesome-icon>&nbsp;Change password
             </b-dropdown-item>
-            <b-dropdown-item href="/logout">
+            <b-dropdown-item @click="logout">
               <font-awesome-icon icon="sign-out-alt"></font-awesome-icon>&nbsp;Logout
             </b-dropdown-item>
           </b-nav-item-dropdown>
@@ -68,7 +68,12 @@ export default {
   methods: {
     logout() {
       const path = "/api/logout";
-      axios.get(path);
+      console.log("Logging out, path: " + path);  // Add this line
+      axios.get(path).then(() => {
+        localStorage.removeItem('user_id');
+        this.user = {};  // Clear the user data
+        this.$router.push('/login');  // Redirect to the login page
+      });
     },
     getCurrentUser() {
       const path = "/api/users/current";

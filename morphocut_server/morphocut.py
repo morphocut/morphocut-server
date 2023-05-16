@@ -209,29 +209,47 @@ def imprint():
 
 @app.route('/api/login', methods=['POST'])
 def login():
+    # data = request.get_json()
+    # user = models.User.query.filter_by(email=data['email']).first()
+    #
+    # if user and user_manager.verify_password(data['password'], user.password):
+    #     login_user(user)
+    #
+    #     # Create a response with the access token as a cookie
+    #     response = make_response(jsonify({'status': 'success', 'message': 'Logged in successfully'}))
+    #     response.headers['X-User-Id'] = user.id
+    #
+    #     return response
+    # else:
+    #     return jsonify({'status': 'error', 'message': 'Invalid email or password'})
+
     data = request.get_json()
     user = models.User.query.filter_by(email=data['email']).first()
 
-    if user and user_manager.verify_password(data['password'], user):
+    if user and user_manager.verify_password(data['password'], user.password):
         login_user(user)
 
-        # Create a response with the access token as a cookie
-        response = make_response(jsonify({'status': 'success', 'message': 'Logged in successfully'}))
-        response.headers['X-User-Id'] = user.id
-
-        return response
+        return jsonify({
+            'status': 'success',
+            'message': 'Logged in successfully',
+            'user_id': user.id
+        })
     else:
-        return jsonify({'status': 'error', 'message': 'Invalid email or password'})
+        return jsonify({
+            'status': 'error',
+            'message': 'Invalid email or password'
+        })
 
 
-@app.route("/logout")
+@app.route("/api/logout", methods=["GET"])
 @login_required
 def logout():
-    """Logs out the current user and redirects to the index page.
-
-    """
+    """Logs out the current user and redirects to the index page."""
     logout_user()
-    return redirect(url_for("index"))
+    return jsonify({
+        'status': 'success',
+        'message': 'Logged out successfully'
+    })
 
 
 @app.route("/data/<path:path>")
