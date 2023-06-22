@@ -14,13 +14,13 @@ import urllib.parse
 import datetime
 
 from flask import (Flask, Response, abort, redirect, render_template, request,
-                   url_for, current_app)
+                   url_for, current_app, make_response)
 from flask_cors import CORS
 from flask import jsonify
 from flask.helpers import send_from_directory
 from flask.blueprints import Blueprint
 from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
-from flask_login import logout_user, LoginManager
+from flask_login import logout_user, LoginManager, login_user
 
 import sqlalchemy
 from sqlalchemy import func
@@ -150,6 +150,8 @@ def add_user_to_database(email, password, admin):
         )
         database.session.add(user)  # pylint: disable=no-member
         database.session.commit()  # pylint: disable=no-member
+        app.logger.info(f"User with email {email} added successfully.")
+        app.logger.info(user)
 
         if admin:
             check_admin_role()
@@ -158,6 +160,7 @@ def add_user_to_database(email, password, admin):
             user_role = models.UserRoles(user_id=user.id, role_id=role.id)
             database.session.add(user_role)  # pylint: disable=no-member
             database.session.commit()  # pylint: disable=no-member
+            app.logger.info(f"User with email {email} granted admin role.")
 
 
 def check_admin_role():
@@ -204,25 +207,49 @@ def imprint():
     return redirect(url_for("frontend.imprint"))
 
 
-@app.route("/login")
-@login_required
+@app.route('/api/login', methods=['POST'])
 def login():
-    """Redirects index requests to the frontend index page.
+    # data = request.get_json()
+    # user = models.User.query.filter_by(email=data['email']).first()
+    #
+    # if user and user_manager.verify_password(data['password'], user.password):
+    #     login_user(user)
+    #
+    #     # Create a response with the access token as a cookie
+    #     response = make_response(jsonify({'status': 'success', 'message': 'Logged in successfully'}))
+    #     response.headers['X-User-Id'] = user.id
+    #
+    #     return response
+    # else:
+    #     return jsonify({'status': 'error', 'message': 'Invalid email or password'})
 
-    """
-    print('login request')
+    data = request.get_json()
+    user = models.User.query.filter_by(email=data['email']).first()
 
-    return redirect(url_for("frontend.routes"))
+    if user and user_manager.verify_password(data['password'], user.password):
+        login_user(user)
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Logged in successfully',
+            'user_id': user.id
+        })
+    else:
+        return jsonify({
+            'status': 'error',
+            'message': 'Invalid email or password'
+        })
 
 
-@app.route("/logout")
+@app.route("/api/logout", methods=["GET"])
 @login_required
 def logout():
-    """Logs out the current user and redirects to the index page.
-
-    """
+    """Logs out the current user and redirects to the index page."""
     logout_user()
-    return redirect(url_for("index"))
+    return jsonify({
+        'status': 'success',
+        'message': 'Logged out successfully'
+    })
 
 
 @app.route("/data/<path:path>")

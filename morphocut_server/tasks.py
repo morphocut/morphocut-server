@@ -19,10 +19,10 @@ def launch_task(name, description, *args, **kwargs):
           `tasks.launch_task` will be removed soon, it is replaced by User.launch_task
           `tasks.write_result` will be removed soon, it is replaced by User.launch_task
     '''
-    execute_and_save(name, description, 0, 0, *args, **kwargs)
+    execute_task_and_save_result(name, description, 0, 0, *args, **kwargs)
 
     task, rq_job = current_user.launch_task(name, description, *args, **kwargs)
-    database.session.commit()  # pylint: disable=no-member
+    database.session.commit()
 
     rq_job.meta['enqueued_at'] = datetime.datetime.now()
 
